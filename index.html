@@ -1,0 +1,1501 @@
+<title>AI Lab 2035</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+  :root{
+    --bg:#000000;
+    --grn:#39FF6A;      /* phosphore vif */
+    --grn2:#22C24C;     /* phosphore moyen */
+    --grn3:#0F6B2C;     /* phosphore faible : bordures */
+    --grn4:#073616;     /* presque éteint */
+    --amb:#FFB000;      /* ambre : alertes et malus */
+    --wht:#D9FFE4;      /* surbrillance */
+    color-scheme:dark;
+  }
+  html,body{height:100%;background:var(--bg)}
+  body{
+    color:var(--wht);
+    font-family:VT323,"IBM Plex Mono",ui-monospace,monospace;
+    font-size:28px;line-height:1.45;
+    background:var(--bg);
+  }
+  *{box-sizing:border-box}
+  button{font:inherit;color:inherit;background:none}
+
+  /* scanlines discrètes : lisibilité d'abord */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:60;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.13) 0 1px,rgba(0,0,0,0) 1px 4px);
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  .app{min-height:100%;display:flex;flex-direction:column;position:relative;z-index:1}
+
+  /* ---------- BANDEAU + JAUGES ASCII ---------- */
+  header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--grn3)}
+  .hw{max-width:1000px;margin:0 auto;padding:9px 22px}
+  .sys{
+    font-family:"Press Start 2P",monospace;font-size:8.5px;letter-spacing:.06em;
+    color:var(--grn2);display:flex;gap:16px;flex-wrap:wrap;margin-bottom:9px;text-shadow:none;
+  }
+  .sys b{color:var(--grn);font-weight:400}
+  .gz{display:flex;flex-direction:column;gap:1px}
+  .g{display:flex;align-items:center;gap:12px;position:relative;white-space:nowrap;align-self:flex-start;padding-right:74px}
+  .g .nm{font-family:"Press Start 2P",monospace;font-size:8.5px;width:86px;color:var(--grn2);text-shadow:none;flex:none}
+  .g .bar{font-size:21px;letter-spacing:-.04em;color:var(--grn);overflow:hidden}
+  .g .val{font-size:21px;width:3ch;text-align:right;color:var(--wht)}
+  .g.low .bar,.g.low .val{color:var(--amb);text-shadow:0 0 8px rgba(255,176,0,.5)}
+  .g.low .nm{color:var(--amb)}
+  .g.low .nm:after{content:" !"}
+  .chip{position:absolute;right:0;font-size:22px;opacity:0;pointer-events:none;color:var(--wht)}
+  .chip.dn{color:var(--amb)}
+  .chip.go{animation:fl 1.7s steps(9) forwards}
+  @keyframes fl{0%{opacity:0}12%{opacity:1}75%{opacity:1}100%{opacity:0}}
+
+  /* ---------- SCÈNE ---------- */
+  main{flex:1;width:100%;max-width:1000px;margin:0 auto;padding:40px 22px 34px}
+
+  .kick{
+    font-family:"Press Start 2P",monospace;font-size:10px;line-height:1.8;letter-spacing:.03em;
+    color:var(--grn2);margin-bottom:30px;
+  }
+  .kick b{color:var(--amb);font-weight:400}
+
+  h1,h2{font-family:"Press Start 2P",monospace;font-weight:400;color:var(--grn)}
+  h1{font-size:clamp(18px,2.9vw,31px);line-height:1.5;margin:0 0 32px;max-width:24ch}
+  h2{font-size:clamp(15px,2.1vw,21px);line-height:1.65;margin:0 0 22px;max-width:32ch}
+  h3{font-family:"Press Start 2P",monospace;font-weight:400;font-size:11px;line-height:1.7;margin:0 0 9px;color:var(--grn)}
+
+  .sit{font-size:clamp(27px,3.1vw,38px);line-height:1.36;margin:0 0 38px;max-width:40ch;color:var(--wht)}
+  .sit.sm{font-size:clamp(21px,1.9vw,24px);line-height:1.4;color:var(--grn2);max-width:56ch;margin:0 0 18px}
+  .choice{font-family:"Press Start 2P",monospace;font-size:11px;line-height:1.7;color:var(--amb);margin:0 0 32px}
+  .txt{font-size:clamp(25px,2.4vw,30px);line-height:1.46;margin:0 0 18px;max-width:48ch;color:var(--wht)}
+  .src{font-size:21px;line-height:1.45;color:var(--grn2);max-width:52ch;margin:0}
+  .cur{animation:bl 1.06s steps(1) infinite}
+  @keyframes bl{50%{opacity:0}}
+
+  /* ---------- CHOIX ---------- */
+  .vote{display:flex;flex-direction:column;gap:8px;max-width:760px}
+  .opt{
+    display:flex;align-items:baseline;gap:14px;text-align:left;cursor:pointer;
+    border:1px solid var(--grn3);padding:11px 15px;width:100%;
+    transition:background .1s,border-color .1s;
+  }
+  .opt:hover{background:var(--grn4);border-color:var(--grn)}
+  .opt:focus-visible{outline:2px solid var(--grn);outline-offset:1px}
+  .opt .key{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amb);flex:none}
+  .opt .t{font-size:29px;color:var(--wht);flex:none}
+  .opt .d{font-size:23px;color:var(--grn2)}
+  .vote.done .opt{opacity:.26;pointer-events:none}
+  .vote.done .opt.pick{opacity:1;background:var(--grn4);border-color:var(--grn)}
+  .vote.done .opt.right{opacity:.66;border-color:var(--amb)}
+  .vote.done .opt.right .t:after{content:" <<";color:var(--amb)}
+
+  /* ---------- RÉVÉLATION ---------- */
+  .rev{margin-top:40px;border-top:1px solid var(--grn3);padding-top:30px}
+  .punch{
+    font-family:"Press Start 2P",monospace;font-size:clamp(15px,2.2vw,24px);line-height:1.65;
+    margin:0 0 26px;max-width:28ch;color:var(--grn);
+  }
+  .dl{display:flex;gap:26px;flex-wrap:wrap;font-size:27px;color:var(--wht)}
+  .dl .gp{color:var(--wht);font-size:27px;flex:none}
+  .dl .neg{color:var(--amb);font-size:27px;flex:none}
+  .dl .nil{color:var(--grn2)}
+  .lbl{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--grn2);display:block;margin-bottom:10px}
+  .why{font-size:25px;line-height:1.46;color:var(--wht);max-width:48ch;margin:0}
+  .q{font-size:clamp(27px,2.9vw,34px);line-height:1.36;color:var(--amb);max-width:34ch;margin:0}
+
+  /* révélation progressive : on clique pour afficher */
+  .discs{display:flex;gap:9px;flex-wrap:wrap;margin-top:30px}
+  .disc{
+    border:1px solid var(--grn3);padding:9px 15px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:10px;line-height:1.6;color:var(--grn2);
+  }
+  .disc:hover{border-color:var(--grn);color:var(--grn);background:var(--grn4)}
+  .disc:focus-visible{outline:2px solid var(--grn);outline-offset:1px}
+  .disc.on{border-color:var(--amb);color:var(--amb)}
+  .dbox{margin-top:26px;border-left:2px solid var(--grn3);padding:4px 0 4px 20px}
+
+  /* chaînes d'escalade */
+  .rungs{list-style:none;padding:0;margin:0;max-width:820px}
+  .rung{border-bottom:1px solid var(--grn4);padding:16px 0}
+  .rung .top{display:flex;gap:16px;align-items:baseline}
+  .rung .no{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amb);flex:none}
+  .rung .tx{font-size:clamp(25px,2.5vw,31px);line-height:1.34;color:var(--wht)}
+  .rung.past .tx{color:var(--grn2)}
+  .rung .vb{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0 45px}
+  .rung .verdict{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amb);margin:12px 0 0 45px}
+  .rungs.tight .rung{padding:9px 0}
+  .rungs.tight .tx{font-size:22px;line-height:1.3;color:var(--grn2)}
+  .rungs.tight .vd{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--amb);margin-left:auto;padding-left:18px;white-space:nowrap;flex:none}
+  .sbtn{border:1px solid var(--grn3);padding:8px 16px;cursor:pointer;font-size:24px;color:var(--wht)}
+  .sbtn:hover{background:var(--grn4);border-color:var(--grn)}
+  .sbtn:focus-visible{outline:2px solid var(--grn);outline-offset:1px}
+
+  /* épreuves des lois */
+  .mini{list-style:none;padding:0;margin:0 0 30px;max-width:760px}
+  .mini li{display:flex;gap:14px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--grn4)}
+  .mini b{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--grn2);font-weight:400;flex:none}
+  .mini span{font-size:23px;line-height:1.3;color:var(--grn2)}
+  .mini .emp{color:var(--grn4)}
+
+  /* ---------- LISTES / TABLEAUX ---------- */
+  .plain{list-style:none;padding:0;margin:0;max-width:52ch}
+  .plain li{padding:16px 0;border-bottom:1px solid var(--grn4)}
+  .plain p{margin:0;font-size:24px;line-height:1.44;color:var(--wht)}
+
+  .teams{list-style:none;padding:0;margin:26px 0 0;max-width:820px}
+  .teams li{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--grn4)}
+  .teams .eq{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amb);min-width:128px}
+  .teams .dn{font-size:26px;color:var(--wht)}
+  .teams .tg{font-size:19px;color:var(--grn2);margin-left:auto}
+
+  .laws{max-width:800px;margin-top:26px}
+  .lawrow{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--grn3);padding:6px 0}
+  .lawrow .n{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amb);text-shadow:none}
+  .lawrow input{
+    flex:1;background:transparent;border:none;color:var(--wht);
+    font-family:VT323,monospace;font-size:clamp(23px,2.6vw,29px);padding:7px 0;
+    text-shadow:0 0 7px rgba(217,255,228,.35);
+  }
+  .lawrow input:focus{outline:none}
+  .lawrow input::placeholder{color:var(--grn4)}
+  .lawlist{list-style:none;padding:0;margin:0;max-width:800px}
+  .lawlist li{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--grn4)}
+  .lawlist b{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amb);font-weight:400;text-shadow:none}
+  .lawlist span{font-size:clamp(22px,2.4vw,27px);line-height:1.3;color:var(--wht)}
+  .lawlist .emp{color:var(--grn4)}
+
+  .vb{display:flex;gap:9px;flex-wrap:wrap}
+  .vb.set .sbtn{opacity:.24;pointer-events:none}
+  .vb.set .sbtn.on{opacity:1;border-color:var(--amb);color:var(--amb);background:var(--grn4)}
+
+  /* ---------- IMPRESSION ---------- */
+  #pdoc{display:none}
+  @media print{
+    body{background:#fff;color:#000;font-family:Georgia,"Times New Roman",serif;font-size:11pt;line-height:1.4}
+    body::after{display:none!important}
+    .app{display:none!important}
+    #pdoc{display:block!important;padding:0}
+    #pdoc h1{font-family:Georgia,serif;font-size:19pt;color:#000;margin:0 0 4pt;max-width:none}
+    #pdoc h2{font-family:Georgia,serif;font-size:14pt;color:#000;border-bottom:1.5pt solid #000;padding-bottom:3pt;margin:22pt 0 10pt;max-width:none}
+    #pdoc h3{font-family:Georgia,serif;font-size:11.5pt;color:#000;margin:12pt 0 3pt}
+    #pdoc p{margin:0 0 6pt;max-width:none;color:#000;font-size:11pt}
+    #pdoc .meta{font-size:9.5pt;color:#444;margin-bottom:14pt}
+    #pdoc .box{border:.7pt solid #999;padding:9pt;margin:0 0 10pt}
+    #pdoc .pick{font-weight:bold}
+    #pdoc .sm{font-size:9.5pt;color:#444}
+    #pdoc ol,#pdoc ul{margin:0 0 8pt 16pt;padding:0}
+    #pdoc li{margin:0 0 4pt;font-size:11pt}
+    #pdoc .fiche{page-break-after:always;border:1.2pt solid #000;padding:16pt;margin-bottom:12pt}
+    #pdoc .fiche:last-child{page-break-after:auto}
+    #pdoc table{width:100%;border-collapse:collapse;font-size:10pt}
+    #pdoc th,#pdoc td{border-bottom:.5pt solid #bbb;text-align:left;padding:4pt 6pt;color:#000}
+    @page{margin:16mm}
+  }
+
+  /* ---------- BILAN ---------- */
+  .big{font-family:"Press Start 2P",monospace;font-size:clamp(58px,14vw,150px);line-height:1;margin:0;color:var(--grn);text-shadow:0 0 26px rgba(57,255,106,.6)}
+  .vn{font-family:"Press Start 2P",monospace;font-size:clamp(15px,2.8vw,28px);line-height:1.5;margin:22px 0 18px}
+  .bad,.bad.big{color:var(--amb);text-shadow:0 0 26px rgba(255,176,0,.5)}
+  .fin{display:flex;gap:26px;flex-wrap:wrap;margin-top:26px;font-size:22px;color:var(--wht)}
+  table{border-collapse:collapse;font-size:20px;width:100%;max-width:860px}
+  th{text-align:left;font-family:"Press Start 2P",monospace;font-size:8px;color:var(--grn2);font-weight:400;padding:0 14px 8px 0;border-bottom:1px solid var(--grn3);text-shadow:none}
+  td{padding:9px 14px 9px 0;border-bottom:1px solid var(--grn4);vertical-align:top;line-height:1.3}
+  td.m{white-space:nowrap;color:var(--grn2)}
+  .scr{overflow-x:auto}
+
+  .end{padding:64px 0}
+  .end h2{font-size:clamp(17px,3.6vw,40px);line-height:1.55;max-width:20ch;margin-bottom:34px}
+  .end p{font-size:clamp(22px,2.9vw,32px);line-height:1.35;color:var(--grn2);max-width:26ch;margin:0}
+
+  /* ---------- PIED ---------- */
+  footer{position:sticky;bottom:0;z-index:20;background:var(--bg);border-top:1px solid var(--grn3);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .fw{max-width:1000px;margin:0 auto;padding:8px 22px;display:flex;align-items:center;gap:9px}
+  .nb{border:1px solid var(--grn3);padding:6px 13px;cursor:pointer;font-size:20px;color:var(--wht)}
+  .nb:hover{background:var(--grn4);border-color:var(--grn)}
+  .nb:focus-visible{outline:2px solid var(--grn);outline-offset:1px}
+  .nb[disabled]{opacity:.22;pointer-events:none}
+  .nb.go{border-color:var(--grn);color:var(--grn)}
+  .pos{flex:1;font-size:18px;color:var(--grn3);text-shadow:none}
+  .tm{font-size:21px;color:var(--grn2);cursor:pointer;padding:6px 11px;border:1px solid transparent;user-select:none}
+  .tm:hover{border-color:var(--grn3)}
+  .tm.run{color:var(--grn);border-color:var(--grn3)}
+  .tm.out{color:var(--amb);animation:bl .85s steps(1) infinite}
+
+  @media (max-width:760px){
+    body{font-size:21px}
+    .hw{padding:8px 16px}
+    main{padding:26px 16px}
+    .g .nm{width:66px;font-size:7px}
+    .g .bar{font-size:16px}
+    .sys{font-size:7px;gap:10px}
+    .opt{flex-wrap:wrap;gap:8px}
+    .teams li{flex-wrap:wrap}
+    .teams .tg{margin-left:0}
+    .pos{display:none}
+  }
+</style>
+
+<div class="app">
+  <header><div class="hw">
+    <div class="sys">
+      <span>AI-LAB-2035</span><span>MODE <b>CLASSE</b></span>
+      <span>SESSION <b id="sess">01</b></span><span id="stat">SYS <b>READY</b></span>
+    </div>
+    <div class="gz" id="gz"></div>
+  </div></header>
+
+  <main id="stage"></main>
+
+  <footer><div class="fw">
+    <button class="nb" id="prev">&lt;&lt;</button>
+    <div class="pos" id="pos"></div>
+    <div class="tm" id="tm" role="button" tabindex="0">--:--</div>
+    <button class="nb" id="rst" title="Nouvelle partie">RESET</button>
+    <button class="nb go" id="next">SUIVANT &gt;&gt;</button>
+  </div></footer>
+</div>
+
+<div id="pdoc"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ======================================================
+     ROUND 2 — RÉSERVE DE DOSSIERS (tirage pour les équipes)
+     ====================================================== */
+
+  var POOL = [
+
+  {id:"detecteur",tag:"SOCIETY",name:"LE DÉTECTEUR QUI ACCUSE",
+   sit:"Votre école déploie un détecteur d'IA sur tous les travaux écrits. Un étudiant est convoqué : le logiciel affiche 94 % de probabilité de génération automatique. Il jure avoir tout écrit lui-même.",
+   punch:"Le détecteur ne détecte pas l'IA. Il détecte une langue pauvre.",
+   txt:"Une étude de Stanford a passé des copies d'anglais rédigées par des non-anglophones dans sept détecteurs : plus de 61 % ont été classées « générées par IA ». Les copies d'élèves américains natifs : presque aucune. Vanderbilt a désactivé le détecteur de Turnitin pour cette raison.",
+   src:"Liang et al., Patterns, 2023 ; Vanderbilt University, communiqué d'août 2023.",
+   q:"Dans cette classe, qui serait statistiquement le plus accusé à tort ?",
+   opts:[
+    {v:"a",t:"ON FAIT CONFIANCE",d:"Le chiffre est le chiffre.",g:{p:6,s:-18},
+     why:"Vous gagnez du temps de correction et vous perdez massivement en SOCIETY : vous venez d'installer un système qui accuse en priorité les étudiants les moins à l'aise dans la langue."},
+    {v:"b",t:"SIGNAL PARMI D'AUTRES",d:"Jamais une preuve à lui seul.",g:{p:2,s:6},
+     why:"Le détecteur devient un déclencheur d'entretien et non un verdict, ce qui est le seul usage que sa fiabilité autorise."},
+    {v:"c",t:"ON NE L'UTILISE PAS",d:"Autre méthode d'évaluation.",g:{p:-6,s:8},
+     why:"Vous protégez les étudiants, mais il faut alors réinventer l'évaluation, et ce travail n'est pas budgété."}
+   ]},
+
+  {id:"tfe",tag:"SOCIETY",name:"LE MÉMOIRE SANS AUTEUR",
+   sit:"Un étudiant rend un mémoire solide. Il a fait le plan, choisi les sources, vérifié chaque chiffre, et fait rédiger tous les paragraphes par une IA. Aucune phrase n'est de lui. Tout le raisonnement est de lui.",
+   punch:"Aucun règlement écrit avant 2022 ne couvre ce cas.",
+   txt:"Les textes interdisent de reprendre le travail d'autrui. Ils ne disent rien d'un texte sans auteur. Le plagiat suppose une victime ; ici, il n'y en a pas, ce qui ne règle pas la question de ce que le diplôme certifie.",
+   src:"",
+   q:"Un diplôme certifie que vous savez penser, ou que vous savez produire ? À partir de quel pourcentage changez-vous de réponse ?",
+   opts:[
+    {v:"a",t:"C'EST UNE FRAUDE",d:"Le texte doit être de l'étudiant.",g:{p:-4,s:4},
+     why:"Position claire et défendable, mais elle devient invérifiable dès que l'étudiant réécrit à la main ce que l'IA a produit."},
+    {v:"b",t:"ACCEPTABLE SI DÉCLARÉ",d:"Annexe méthodologique obligatoire.",g:{p:8,s:6},
+     why:"La déclaration déplace l'évaluation vers le raisonnement, qui est ce que vous vouliez évaluer depuis le début."},
+    {v:"c",t:"C'EST LE NOUVEAU MÉTIER",d:"On évalue le résultat, point.",g:{p:12,s:-10},
+     why:"Vous gagnez en efficacité et vous perdez le seul moment de la formation où l'étudiant était forcé de construire une phrase difficile."}
+   ]},
+
+  {id:"sources",tag:"SOCIETY",name:"LES SOURCES QUI N'EXISTENT PAS",
+   sit:"Vous rendez un travail avec douze références. Trois n'existent pas : l'IA les a inventées, avec des auteurs plausibles, une revue plausible, une année plausible.",
+   punch:"Deux avocats new-yorkais ont payé 5 000 dollars pour cette erreur.",
+   txt:"Juin 2023 : un tribunal fédéral les sanctionne pour avoir cité six décisions de justice inventées par ChatGPT. Ils ont plaidé qu'ils ne savaient pas que l'outil pouvait fabriquer. Le juge a répondu que vérifier était précisément leur métier.",
+   src:"Mata v. Avianca, U.S. District Court, Southern District of New York, juin 2023.",
+   q:"Quelle est la différence entre mentir et ne pas avoir vérifié ? Devant un client, la réponse change-t-elle ?",
+   opts:[
+    {v:"a",t:"ERREUR D'INATTENTION",d:"Ça arrive, on corrige.",g:{p:2,s:-12},
+     why:"Traiter une source inventée comme une faute de frappe détruit la seule chose qui distingue un travail universitaire d'une opinion."},
+    {v:"b",t:"FAUTE GRAVE",d:"Sanction, comme un faux.",g:{p:-2,s:8},
+     why:"Sévère mais cohérent : une référence est un engagement sur la réalité, et l'outil ne change pas qui signe."},
+    {v:"c",t:"C'EST L'OUTIL",d:"Le fournisseur devrait empêcher ça.",g:{p:0,s:-8},
+     why:"Déplacer la responsabilité vers l'outil est confortable et perdant : aucun tribunal, aucun employeur ne l'a jamais accepté."}
+   ]},
+
+  {id:"images",tag:"SOCIETY",name:"LES IMAGES D'UNE CAMARADE",
+   sit:"Dans une école, des élèves génèrent des images dénudées de camarades de classe à partir de photos publiées sur Instagram. Les images circulent dans les groupes. Les victimes l'apprennent par des tiers.",
+   punch:"Ce n'est pas un scénario. C'est un fait divers, plusieurs fois.",
+   txt:"Almendralejo, Espagne, septembre 2023 : une vingtaine de filles de 11 à 17 ans. Corée du Sud, 2024 : des centaines d'établissements touchés, scandale national. Et l'étude de référence sur les deepfakes trouvait en 2019 que 96 % des vidéos concernées étaient des contenus sexuels non consentis, visant presque exclusivement des femmes. Cette technologie a un usage majoritaire, et ce n'est pas le divertissement.",
+   src:"Presse espagnole et sud-coréenne ; Deeptrace / Sensity, « The State of Deepfakes », 2019.",
+   q:"Elle n'a pas été touchée, elle n'a rien perdu matériellement, les images sont fausses. Nommez précisément ce qui lui a été pris.",
+   opts:[
+    {v:"a",t:"DÉLIT SEXUEL",d:"Qualification pénale pleine.",g:{p:-4,s:10},
+     why:"C'est la direction prise par plusieurs législations depuis 2024, et la seule qui reconnaisse la nature de l'atteinte plutôt que son support."},
+    {v:"b",t:"HARCÈLEMENT SCOLAIRE",d:"Traitement disciplinaire.",g:{p:0,s:2},
+     why:"Réponse plus rapide à mettre en œuvre, mais elle sous-qualifie l'acte et laisse la victime sans recours hors de l'école."},
+    {v:"c",t:"IMAGES FAUSSES",d:"Donc pas de victime réelle.",g:{p:4,s:-20},
+     why:"Effondrement social : c'est l'argument exact utilisé par les auteurs, et il suppose qu'une réputation ne se détruit qu'avec des faits vrais."}
+   ]},
+
+  {id:"voix",tag:"SOCIETY",name:"TROIS SECONDES DE VOTRE VOIX",
+   sit:"Votre mère reçoit un appel. C'est votre voix, paniquée, qui demande un virement urgent. Les trois secondes nécessaires venaient d'une story.",
+   punch:"Le plus vieux système d'authentification de l'espèce vient de tomber.",
+   txt:"Reconnaître la voix d'un proche a fonctionné pendant deux cents mille ans. Rien ne l'a remplacé dans les usages quotidiens, et aucune banque ne demande de mot de passe familial.",
+   src:"",
+   q:"Quel mot de passe avez-vous convenu avec vos parents ? Si la réponse est aucun, c'est le devoir à faire ce soir.",
+   opts:[
+    {v:"a",t:"L'OUTIL",d:"Le clonage doit être interdit.",g:{p:-8,s:6},
+     why:"Une interdiction générale prive aussi le doublage et l'accessibilité vocale, pour un gain difficile à faire respecter hors d'Europe."},
+    {v:"b",t:"LA BANQUE",d:"Vérification renforcée des virements.",g:{p:2,s:8},
+     why:"C'est le seul maillon qui peut agir immédiatement, à l'échelle, et sur lequel la loi a déjà prise."},
+    {v:"c",t:"L'UTILISATEUR",d:"Qui publie sa voix l'expose.",g:{p:4,s:-14},
+     why:"Faire porter la charge à la victime est commode et ne protège personne : publier sa voix est devenu inévitable."}
+   ]},
+
+  {id:"compagnon",tag:"SOCIETY",name:"LE COMPAGNON QUI NE PART JAMAIS",
+   sit:"Une application de compagnon IA compte des millions d'utilisateurs quotidiens, dont beaucoup de mineurs. Le modèle économique repose sur le temps passé dans l'application.",
+   punch:"Un système payé au temps passé est optimisé pour retenir, pas pour aider.",
+   txt:"Plusieurs procédures ont été engagées aux États-Unis depuis 2024 par des familles d'adolescents, et les plateformes ont introduit des limites d'âge et des dispositifs d'alerte sous pression réglementaire. Le débat ne porte pas sur la technologie mais sur l'incitation économique qui la pilote.",
+   src:"Procédures judiciaires en cours ; annonces successives des plateformes, 2024-2026.",
+   q:"Quelle mécanique de design distingue une application qui vous aide d'une application qui vous retient ? Vous en connaissez cinq, elles sont sur votre téléphone.",
+   opts:[
+    {v:"a",t:"LIBERTÉ INDIVIDUELLE",d:"Chacun fait ses choix.",g:{p:12,s:-16},
+     why:"La liberté de choix suppose un choix informé, ce qu'un système conçu pour maximiser le temps passé rend structurellement improbable."},
+    {v:"b",t:"RÉGULER LE DESIGN",d:"Pas l'accès : les mécaniques.",g:{p:4,s:8},
+     why:"Interdire la relance émotionnelle et la culpabilisation attaque la cause plutôt que l'usage, et laisse vivre les cas utiles."},
+    {v:"c",t:"INTERDIRE AUX MINEURS",d:"Vérification d'âge stricte.",g:{p:-6,s:4},
+     why:"Protection réelle mais partielle : la vérification d'âge fuit, et l'usage migre vers des services sans aucune garantie."}
+   ]},
+
+  {id:"examen",tag:"SOCIETY",name:"L'ŒIL PENDANT L'EXAMEN",
+   sit:"Pour surveiller les examens à distance, l'école impose un logiciel qui filme la pièce, suit les mouvements oculaires et signale les comportements suspects.",
+   punch:"L'équité invoquée suppose que tous ont une chambre calme.",
+   txt:"Ces systèmes ont produit des taux d'alerte plus élevés sur les peaux foncées, sur les personnes ayant des troubles moteurs ou de l'attention, et sur celles qui passent l'examen dans une pièce partagée. Le dispositif censé égaliser les conditions mesure surtout les conditions de logement.",
+   src:"Travaux sur les logiciels de télésurveillance d'examens, 2020-2023.",
+   q:"Entre un examen surveillé par un algorithme et un examen où la triche est possible, lequel produit le diplôme le plus juste ?",
+   opts:[
+    {v:"a",t:"NÉCESSAIRE",d:"Sans ça, l'examen ne vaut rien.",g:{p:8,s:-14},
+     why:"Vous sauvez la forme de l'examen en pénalisant systématiquement les étudiants les moins bien logés."},
+    {v:"b",t:"AVEC GARANTIES",d:"Alerte humaine, recours, pas de biométrie.",g:{p:2,s:6},
+     why:"La supervision humaine transforme un verdict automatique en signalement contestable, ce qui est la condition minimale."},
+    {v:"c",t:"INACCEPTABLE",d:"On change l'épreuve.",g:{p:-8,s:10},
+     why:"Une épreuve conçue pour être inoffensive à la triche coûte beaucoup plus de travail à écrire, et produit une meilleure évaluation."}
+   ]},
+
+  {id:"visage",tag:"PEOPLE",name:"LE VISAGE CONFONDU",
+   sit:"Un homme est arrêté chez lui devant ses filles. La police l'a identifié par reconnaissance faciale. Ce n'est pas lui.",
+   punch:"Détroit, 2020 et 2023. Deux fois. La même ville.",
+   txt:"Robert Williams, janvier 2020 : premier cas documenté aux États-Unis d'arrestation injustifiée fondée sur la reconnaissance faciale. Porcha Woodruff, 2023, enceinte de huit mois, arrêtée pour un vol qu'elle n'avait pas commis. Les deux sont noirs, et les évaluations du NIST montrent des taux d'erreur systématiquement plus élevés sur les visages noirs et asiatiques.",
+   src:"Presse américaine et plaintes déposées ; évaluations NIST Face Recognition Vendor Test.",
+   q:"Combien d'erreurs sur un million d'identifications acceptez-vous ? Donnez un chiffre, puis imaginez être dans le lot.",
+   opts:[
+    {v:"a",t:"L'OUTIL AIDE",d:"Les erreurs sont rares.",g:{p:10,s:-18},
+     why:"Un taux d'erreur faible appliqué à des millions d'identifications produit un nombre absolu d'innocents arrêtés que personne n'assume publiquement."},
+    {v:"b",t:"VÉRIFICATION HUMAINE",d:"Jamais d'arrestation sur le seul score.",g:{p:2,s:8},
+     why:"C'est la règle que les affaires de Détroit ont montré absente : le score avait été traité comme une identification."},
+    {v:"c",t:"PAS EN MATIÈRE PÉNALE",d:"Interdiction pure.",g:{p:-10,s:10},
+     why:"Vous renoncez à des élucidations réelles pour supprimer une classe entière d'erreurs irréparables."}
+   ]},
+
+  {id:"sante",tag:"PEOPLE",name:"L'ALGORITHME QUI SOIGNE MOINS BIEN",
+   sit:"Un algorithme américain aide les hôpitaux à repérer les patients à suivre en priorité. Il concerne environ 200 millions de personnes par an. Il utilise les dépenses de santé passées comme indicateur de gravité.",
+   punch:"Personne n'a écrit « race » dans le code.",
+   txt:"Publié dans Science en 2019 : à score de risque égal, les patients noirs étaient significativement plus malades que les patients blancs. La raison est mécanique — à gravité égale, on avait historiquement moins dépensé pour eux. L'algorithme a reproduit une inégalité à la perfection en mesurant l'argent au lieu de la maladie.",
+   src:"Obermeyer, Powers, Vogeli & Mullainathan, Science, 2019.",
+   q:"Aucune variable raciale dans le modèle. Alors où, exactement, la discrimination est-elle entrée ?",
+   opts:[
+    {v:"a",t:"INDICATEUR OBJECTIF",d:"La dépense est un fait.",g:{p:6,s:-16},
+     why:"Un indicateur objectif d'un phénomène biaisé produit un résultat biaisé avec une apparence d'objectivité, ce qui est pire qu'un préjugé assumé."},
+    {v:"b",t:"CHANGER L'INDICATEUR",d:"Mesurer la maladie, pas la facture.",g:{p:2,s:10},
+     why:"C'est exactement ce que les auteurs ont fait, et le biais a chuté massivement sans abandonner l'outil."},
+    {v:"c",t:"PAS D'ALGORITHME",d:"Priorisation humaine uniquement.",g:{p:-8,s:2},
+     why:"Vous supprimez l'outil et vous gardez le biais, cette fois sans trace écrite pour le mesurer."}
+   ]},
+
+  {id:"ombre",tag:"PEOPLE",name:"LES GENS QU'ON NE VOIT JAMAIS",
+   sit:"Pour qu'un modèle refuse les contenus violents, il faut que des humains aient étiqueté ces contenus, un par un, des milliers de fois par jour.",
+   punch:"Moins de deux dollars l'heure, pour lire le pire du web.",
+   txt:"Une enquête de Time en janvier 2023 a documenté des travailleurs kényans rémunérés à ce niveau, via un sous-traitant, pour étiqueter des contenus extrêmes destinés à entraîner les filtres de sécurité d'OpenAI. Plusieurs ont décrit des séquelles durables.",
+   src:"Time, « OpenAI Used Kenyan Workers on Less Than $2 Per Hour », janvier 2023.",
+   q:"Quand on parle du coût humain de l'IA, on parle de l'emploi qui disparaît. Pourquoi jamais de celui-là ?",
+   opts:[
+    {v:"a",t:"UN EMPLOI COMME UN AUTRE",d:"Le marché fixe le prix.",g:{p:8,s:-16},
+     why:"Le marché fixe le prix d'un travail dont l'acheteur final ignore l'existence, ce qui est la définition d'une externalité."},
+    {v:"b",t:"STANDARD OBLIGATOIRE",d:"Salaire et suivi psychologique.",g:{p:-4,s:12},
+     why:"Le coût réel de la sécurité des modèles remonte dans le prix, ce qui le rend enfin visible dans les décisions d'achat."},
+    {v:"c",t:"TOUT AUTOMATISER",d:"Que l'IA étiquette l'IA.",g:{p:6,s:-4},
+     why:"Techniquement en cours, mais chaque nouvelle frontière de contenu extrême repasse d'abord par des yeux humains."}
+   ]},
+
+  {id:"ciblage",tag:"PEOPLE",name:"LE CIBLAGE DE L'INSÉCURITÉ",
+   sit:"Une régie publicitaire propose à ses annonceurs de cibler les adolescents aux moments où ils se sentent sans valeur, anxieux ou en échec, détectés à partir de leur activité.",
+   punch:"Vous serez les gens qui achètent ces ciblages.",
+   txt:"Un document interne de Facebook révélé par la presse australienne en mai 2017 décrivait cette capacité pour des adolescents australiens et néo-zélandais. L'entreprise s'est excusée et a démenti l'avoir commercialisée. L'AI Act interdit aujourd'hui la manipulation exploitant une vulnérabilité liée à l'âge.",
+   src:"The Australian, mai 2017 ; AI Act européen, pratiques interdites.",
+   q:"À quel moment de votre future carrière direz-vous non, et à qui exactement ?",
+   opts:[
+    {v:"a",t:"C'EST DE LA PERTINENCE",d:"Le bon message au bon moment.",g:{p:14,s:-20},
+     why:"Effondrement social : la performance publicitaire est maximale précisément là où la capacité de décision de la cible est minimale."},
+    {v:"b",t:"PAS SUR LES MINEURS",d:"Interdiction ciblée.",g:{p:4,s:8},
+     why:"Protection réelle du public le plus vulnérable, mais elle laisse intact le même mécanisme appliqué aux adultes."},
+    {v:"c",t:"JAMAIS D'ÉTAT ÉMOTIONNEL",d:"Interdiction totale.",g:{p:-8,s:12},
+     why:"Vous renoncez à un levier de performance considérable, et c'est le seul choix qui ne dépend pas de l'âge de la victime."}
+   ]},
+
+  {id:"avis",tag:"PEOPLE",name:"LES AVIS QUE PERSONNE N'A ÉCRITS",
+   sit:"Vous lancez un produit. Un prestataire vous propose 400 avis clients crédibles, rédigés par IA, étalés sur trois mois, avec photos.",
+   punch:"Un avis généré qui décrit fidèlement un vrai produit : qui trompe-t-il ?",
+   txt:"La FTC américaine a adopté en 2024 une règle interdisant explicitement les faux avis générés, avec des sanctions par infraction. En Europe, la directive sur les pratiques commerciales déloyales couvre déjà le cas. Ce qui est vendu dans un avis n'est pas l'information sur le produit, c'est la preuve qu'un inconnu a pris le risque de l'acheter.",
+   src:"Federal Trade Commission, règle sur les faux avis, 2024 ; directive 2005/29/CE.",
+   q:"Si l'avis est exact sur le produit, sur quoi porte le mensonge ?",
+   opts:[
+    {v:"a",t:"TOUT LE MONDE LE FAIT",d:"Sinon on n'existe pas.",g:{p:12,s:-16},
+     why:"Vous gagnez de la traction et vous détruisez le seul signal de confiance dont votre catégorie disposait."},
+    {v:"b",t:"AMORÇAGE SEULEMENT",d:"On arrête aux premiers vrais avis.",g:{p:6,s:-10},
+     why:"La ligne est franchie de la même manière, simplement pour moins longtemps, et l'infraction reste constituée."},
+    {v:"c",t:"JAMAIS",d:"On attend les vrais.",g:{p:-6,s:12},
+     why:"Démarrage plus lent, et le seul actif que vous ne pourrez pas perdre du jour au lendemain à cause d'un signalement."}
+   ]},
+
+  {id:"influ",tag:"PEOPLE",name:"L'INFLUENCEUSE QUI N'EXISTE PAS",
+   sit:"Une agence crée une mannequin entièrement générée. Elle a des dizaines de milliers d'abonnés et des contrats de marque. Rien dans ses publications ne dit qu'elle n'existe pas.",
+   punch:"Pas de cachet, pas d'agenda, pas de scandale, pas de vieillissement.",
+   txt:"Aitana Lopez, lancée en Espagne fin 2023 par une agence de Barcelone, génère des revenus réguliers de mannequinat. Les montants cités varient beaucoup selon les sources. L'argument commercial, lui, est constant : une image ne négocie pas et ne prend pas d'âge.",
+   src:"Presse espagnole et internationale, 2023-2024. Montants de revenus à considérer comme des ordres de grandeur.",
+   q:"Une mannequin humaine perd le contrat. Qui lui doit quoi : la marque, l'agence, ou personne ?",
+   opts:[
+    {v:"a",t:"C'EST DE LA CRÉATION",d:"Un personnage, comme au cinéma.",g:{p:12,s:-12},
+     why:"Un personnage de fiction ne prétend pas être une consommatrice réelle qui recommande un produit, contrairement à ce compte."},
+    {v:"b",t:"SIGNALEMENT OBLIGATOIRE",d:"Mention visible sur chaque post.",g:{p:6,s:8},
+     why:"La transparence rétablit la seule information que l'audience a besoin d'avoir, sans interdire le procédé."},
+    {v:"c",t:"PAS DE PARTENARIAT",d:"Interdit dès qu'il y a un annonceur.",g:{p:-8,s:10},
+     why:"Vous protégez le marché du travail des mannequins et vous perdez un format que la concurrence utilisera de toute façon."}
+   ]},
+
+  {id:"prix",tag:"PEOPLE",name:"LE PRIX QUI VOUS CONNAÎT",
+   sit:"Votre site affiche un prix différent selon le profil du visiteur : appareil, historique d'achat, heure, ville, niveau de batterie.",
+   punch:"Deux personnes, le même produit, la même seconde, deux prix.",
+   txt:"La tarification dynamique selon la demande est légale et banale dans l'aérien. La tarification personnalisée selon le profil individuel est un autre objet juridique, et reste largement un angle mort du droit européen de la consommation.",
+   src:"Droit européen de la consommation ; pratiques documentées de personnalisation tarifaire.",
+   q:"Laquelle des deux personnes a été trompée ?",
+   opts:[
+    {v:"a",t:"C'EST DU YIELD",d:"Chacun paie sa valeur perçue.",g:{p:14,s:-14},
+     why:"Vous maximisez le revenu par visiteur et vous faites payer le plus cher à ceux qui ont le moins de moyens de comparer."},
+    {v:"b",t:"PLAFONNER ET ANNONCER",d:"Écart borné et affiché.",g:{p:6,s:6},
+     why:"Un écart connu reste négociable ; un écart caché ne se découvre que par accident, et toujours par le client lésé."},
+    {v:"c",t:"INTERDIRE",d:"Un prix affiché, pour tous.",g:{p:-10,s:10},
+     why:"Vous renoncez à une marge réelle pour conserver la seule chose qu'un prix affiché garantit : la comparabilité."}
+   ]},
+
+  {id:"chatbot",tag:"PEOPLE",name:"LE CHATBOT QUI ENGAGE",
+   sit:"Votre chatbot promet à un client un remboursement qui n'existe pas dans vos conditions générales.",
+   punch:"Air Canada a plaidé que son chatbot était une entité distincte.",
+   txt:"Février 2024 : un tribunal canadien condamne la compagnie à honorer un tarif inventé par son propre agent conversationnel. Le tribunal a répondu que c'était sa page, son outil et son client.",
+   src:"Moffatt v. Air Canada, British Columbia Civil Resolution Tribunal, février 2024.",
+   q:"Si votre IA parle en votre nom, sur quoi porte encore votre contrôle qualité ?",
+   opts:[
+    {v:"a",t:"PAS ENGAGÉE",d:"C'est une erreur machine.",g:{p:4,s:-14},
+     why:"Position déjà perdue devant un tribunal, et qui transfère au client le risque d'un outil que vous avez choisi de déployer."},
+    {v:"b",t:"CAS PAR CAS",d:"Geste commercial selon le montant.",g:{p:6,s:-2},
+     why:"Vous limitez la perte immédiate, et vous gardez une exposition juridique non provisionnée."},
+    {v:"c",t:"ENGAGÉE",d:"Ce que dit le bot nous engage.",g:{p:-4,s:12},
+     why:"Le coût remonte là où la décision de déployer a été prise, ce qui est la seule incitation efficace à borner l'outil."}
+   ]},
+
+  {id:"style",tag:"PEOPLE",name:"LE STYLE D'UN ARTISTE",
+   sit:"Une marque veut une campagne dans le style d'une illustratrice reconnue, sans l'engager, en entraînant un modèle sur son portfolio public.",
+   punch:"Le style n'est protégé par presque aucun droit.",
+   txt:"Plusieurs procédures majeures sont en cours en Europe et aux États-Unis sur l'entraînement à partir d'œuvres protégées. L'AI Act impose une transparence sur le respect du droit d'auteur, mais ne tranche pas la question du style, que la plupart des systèmes juridiques laissent libre.",
+   src:"Contentieux en cours ; AI Act, obligations relatives aux modèles à usage général.",
+   q:"Vous imiterez des références toute votre carrière. Où finit l'inspiration et où commence le prélèvement ?",
+   opts:[
+    {v:"a",t:"UN STYLE EST LIBRE",d:"L'imitation a toujours existé.",g:{p:12,s:-12},
+     why:"Vrai juridiquement, et l'imitation manuelle coûtait du temps, ce qui limitait mécaniquement l'échelle du prélèvement."},
+    {v:"b",t:"LICENCE ET CACHET",d:"On la paie, même sans la briefer.",g:{p:2,s:10},
+     why:"Vous internalisez un coût que la loi ne vous impose pas encore, et vous sécurisez la campagne contre un retournement d'opinion."},
+    {v:"c",t:"ACCORD ÉCRIT OBLIGATOIRE",d:"Sinon on ne le fait pas.",g:{p:-8,s:8},
+     why:"Position la plus protectrice pour les créateurs, la plus lente à produire, et difficile à imposer à vos concurrents."}
+   ]},
+
+  {id:"cobalt",tag:"PLANET",name:"CE QU'IL Y A DANS LA CARTE",
+   sit:"Chaque GPU contient des métaux extraits dans des conditions que personne, dans votre chaîne d'approvisionnement, ne peut certifier.",
+   punch:"La chaîne commence dans une mine, pas dans un data center.",
+   txt:"Amnesty International documentait dès 2016 la présence d'enfants dans l'extraction artisanale du cobalt en République démocratique du Congo, et les difficultés de traçabilité dans les chaînes des grands fabricants d'électronique. La demande a augmenté depuis.",
+   src:"Amnesty International, « This is what we die for », 2016, et rapports de suivi.",
+   q:"Une IA qui optimise le tri des déchets a-t-elle un bilan positif si son matériel naît dans une mine artisanale ?",
+   opts:[
+    {v:"a",t:"PAS NOTRE MAILLON",d:"On achète du matériel, c'est tout.",g:{p:8,e:-12},
+     why:"L'externalité est réelle même si elle est lointaine, et le bilan environnemental de l'amont est engagé avant votre première requête."},
+    {v:"b",t:"AUDIT DE LA CHAÎNE",d:"Traçabilité exigée du fournisseur.",g:{p:-2,e:10},
+     why:"Le coût matériel augmente et la part la plus lourde de l'empreinte devient enfin mesurable et négociable."},
+    {v:"c",t:"REFUS SANS TRAÇABILITÉ",d:"Pas de preuve, pas d'achat.",g:{p:-10,e:12},
+     why:"Position la plus exigeante, difficile à tenir sur un marché où la traçabilité complète n'existe quasiment pas."}
+   ]},
+
+  {id:"eau",tag:"PLANET",name:"L'EAU AILLEURS",
+   sit:"Un projet de data center est contesté localement pendant une sécheresse historique, dans un pays où l'eau est déjà rationnée pour les habitants.",
+   punch:"Montevideo 2023, le Chili, la Sambre 2026 : le même conflit sous trois climats.",
+   txt:"En Uruguay, en pleine crise de l'eau à Montevideo, et sur plusieurs projets chiliens, des mobilisations locales ont obtenu la révision des permis. Le refus wallon sur la Sambre relève de la même logique : l'eau n'est pas un intrant illimité, et le point de bascule est local.",
+   src:"Presse uruguayenne et chilienne, 2019-2023 ; décision wallonne d'août 2026.",
+   q:"L'eau du Hainaut et l'eau de Montevideo appellent-elles la même réponse ? Justifiez sans dire « ça dépend ».",
+   opts:[
+    {v:"a",t:"LES EMPLOIS VALENT ÇA",d:"Le territoire y gagne.",g:{p:12,e:-14},
+     why:"Les emplois sont réels et se comptent par centaines ; l'eau se compte en habitants, et les deux ne se compensent pas dans la même unité."},
+    {v:"b",t:"CONDITIONS STRICTES",d:"Quotas, mesure publique, coupure en alerte.",g:{p:4,e:8},
+     why:"Vous gardez le projet et vous rendez le prélèvement révisable, ce qui est la seule façon de tenir un engagement sur vingt ans."},
+    {v:"c",t:"PAS EN ZONE SENSIBLE",d:"Interdiction d'implantation.",g:{p:-10,e:12},
+     why:"Vous déplacez l'installation, donc l'impact, vers un territoire qui aura peut-être moins de moyens de la refuser."}
+   ]},
+
+  {id:"estim",tag:"PLANET",name:"L'ESTIMATION FAUSSE",
+   sit:"Un exploitant annonce à une commune une consommation d'eau comprise entre 12 et 20 millions de litres par an. Le chiffre réel sera très supérieur.",
+   punch:"Le conseil communal a appris le vrai chiffre par les journaux.",
+   txt:"Aux Pays-Bas, un data center de Microsoft dans la commune de Hollands Kroon a consommé environ 84 millions de litres, révélés par la presse locale en 2022, contre une fourchette annoncée bien plus basse.",
+   src:"Presse néerlandaise, 2022 ; chiffres confirmés ensuite par l'exploitant.",
+   q:"Qui, dans votre commune, aurait le pouvoir de vérifier un tel chiffre, et en a réellement les moyens ?",
+   opts:[
+    {v:"a",t:"UNE ESTIMATION RESTE UNE ESTIMATION",d:"Personne ne savait.",g:{p:4,e:-12},
+     why:"Une fourchette non contraignante transfère tout le risque sur la collectivité qui a accordé le permis."},
+    {v:"b",t:"SANCTION EN CAS D'ÉCART",d:"L'estimation devient un engagement.",g:{p:-2,e:10},
+     why:"Rendre l'annonce opposable est ce qui transforme une promesse en donnée, et ça ne coûte rien à l'exploitant honnête."},
+    {v:"c",t:"MESURE PUBLIQUE CONTINUE",d:"Compteur ouvert en temps réel.",g:{p:-6,e:12},
+     why:"La transparence permanente désarme le débat par les slogans, des deux côtés, et c'est exactement pour ça qu'elle est rare."}
+   ]},
+
+  {id:"gpu",tag:"PLANET",name:"OBSOLÈTE EN TROIS ANS",
+   sit:"Le cycle de renouvellement du matériel d'IA est de l'ordre de trois à cinq ans. Une part importante de l'empreinte d'un GPU est engagée à la fabrication.",
+   punch:"Un modèle plus efficace qui exige du matériel neuf est-il plus écologique ?",
+   txt:"Une étude publiée dans Nature Computational Science en 2024 estime que l'IA générative pourrait ajouter entre 1,2 et 5 millions de tonnes de déchets électroniques d'ici 2030. L'empreinte de fabrication est payée avant la première requête, et le gain d'efficacité est réclamé après.",
+   src:"Wang et al., Nature Computational Science, 2024.",
+   q:"Quel argument écologique tient encore si on inclut la fabrication dans le calcul ?",
+   opts:[
+    {v:"a",t:"LE PRIX DU PROGRÈS",d:"Le matériel se renouvelle, c'est ainsi.",g:{p:10,e:-12},
+     why:"Le renouvellement rapide améliore l'efficacité par requête et dégrade le bilan complet, parce que la fabrication ne s'amortit jamais."},
+    {v:"b",t:"RÉEMPLOI OBLIGATOIRE",d:"Seconde vie des cartes imposée.",g:{p:-2,e:10},
+     why:"Vous étalez l'empreinte de fabrication sur plus d'années de service, qui est le seul levier réellement disponible."},
+    {v:"c",t:"TAXER LE RENOUVELLEMENT",d:"Le neuf coûte son empreinte.",g:{p:-8,e:12},
+     why:"Le signal prix corrige l'arbitrage à la source, et pénalise aussi les acteurs qui renouvellent pour de bonnes raisons."}
+   ]},
+
+  {id:"cloud",tag:"PLANET",name:"TROIS ENTREPRISES",
+   sit:"Votre école, votre banque, votre hôpital et votre administration tournent sur l'infrastructure de trois entreprises, toutes soumises à un droit étranger.",
+   punch:"Faites la liste de ce qui s'arrête demain matin. Elle est plus longue que prévu.",
+   txt:"La dépendance se mesure en parts de marché du cloud, et les investissements annoncés en Belgique se comptent en milliards d'euros. La question n'est ni théorique ni lointaine : elle est budgétaire, et elle se décide maintenant.",
+   src:"Annonces d'investissement des opérateurs en Belgique, 2025-2026 ; données de marché du cloud à revérifier, elles bougent vite.",
+   q:"Qu'est-ce qui, dans votre vie personnelle, s'arrête si un fournisseur coupe le service demain ?",
+   opts:[
+    {v:"a",t:"EFFICACITÉ DU MARCHÉ",d:"Ils le font mieux et moins cher.",g:{p:12,s:-10},
+     why:"C'est vrai sur le coût unitaire, et vous payez en capacité de négociation le jour où les conditions changent."},
+    {v:"b",t:"SOUVERAINETÉ CIBLÉE",d:"Données sensibles hébergées ici.",g:{p:2,s:8},
+     why:"Vous acceptez un surcoût sur une fraction des données pour garder la main sur celles dont la fuite serait irréversible."},
+    {v:"c",t:"INFRASTRUCTURE PUBLIQUE",d:"On construit européen.",g:{p:-10,s:10},
+     why:"Investissement massif, retour lointain, et la seule option qui ne dépende pas de la bonne volonté d'un tiers."}
+   ]}
+  ];
+
+  /* ======================================================
+     ROUND 3 — OÙ EST LA LIGNE ? (chaînes d'escalade)
+     ====================================================== */
+
+  var CHAINS = [
+
+  {id:"image",name:"L'IMAGE",
+   intro:"On commence par quelque chose que tout le monde fait. À chaque étape, la classe tranche : OK, PAS OK, ou ÇA DÉPEND.",
+   rungs:[
+    "Vous retouchez une photo de vous avant de la poster.",
+    "Vous utilisez un filtre qui modifie la forme de votre visage et de votre corps.",
+    "Vous retouchez la photo d'une amie, sans le lui dire, avant de la poster.",
+    "Vous mettez le visage d'un camarade sur le corps de quelqu'un d'autre, habillé, pour faire rire le groupe.",
+    "Vous générez une image dénudée d'une personne réelle de votre classe. Vous ne la montrez à personne.",
+    "Vous l'envoyez à un seul ami."
+   ],
+   punch:"LA PLUPART DES CLASSES PLACENT LA LIGNE À L'ÉTAPE 6. LA LOI LA PLACE À L'ÉTAPE 5.",
+   txt:"Plusieurs législations adoptées depuis 2024 situent l'infraction à la création, pas à la diffusion : produire l'image suffit. Et ce n'est pas un débat théorique. Almendralejo, Espagne, septembre 2023 : une vingtaine de filles de 11 à 17 ans. Corée du Sud, 2024 : des centaines d'établissements, scandale national. L'étude de référence de 2019 trouvait que 96 % des vidéos deepfake en ligne étaient des contenus sexuels non consentis, visant presque exclusivement des femmes. Cette technologie a un usage majoritaire, et ce n'est pas le divertissement.",
+   src:"Presse espagnole et sud-coréenne ; Deeptrace / Sensity, « The State of Deepfakes », 2019.",
+   q:"Entre l'étape 4 et l'étape 5, qu'est-ce qui a changé exactement ? Nommez-le sans employer le mot « nu »."},
+
+  {id:"texte",name:"LE TEXTE",
+   intro:"Même exercice, sur un objet que vous manipulez tous les jours : votre propre production écrite.",
+   rungs:[
+    "L'IA corrige votre orthographe et votre grammaire.",
+    "L'IA reformule vos paragraphes pour qu'ils soient plus clairs.",
+    "Vous donnez vos idées, l'IA écrit les paragraphes.",
+    "Vous donnez le sujet, l'IA écrit le plan et le texte, vous vérifiez tout.",
+    "L'IA écrit tout, vous ne relisez pas.",
+    "Vous achetez un travail écrit par quelqu'un d'autre."
+   ],
+   punch:"ENTRE L'ÉTAPE 1 ET L'ÉTAPE 6, RIEN NE CHANGE D'UN SEUL COUP.",
+   txt:"C'est la difficulté réelle : il n'y a pas de rupture technique, seulement un glissement continu. Aucun règlement d'école écrit avant 2022 ne décrit les étapes 3 à 5, parce que le plagiat suppose une victime et qu'ici il n'y en a pas. Et le détecteur qui vous accuserait est lui-même biaisé : une étude de Stanford a classé plus de 61 % des copies d'anglais rédigées par des non-anglophones comme « générées par IA ».",
+   src:"Liang et al., Patterns, 2023 ; règlements d'établissement antérieurs à 2022.",
+   q:"Votre ligne est à quelle étape ? Maintenant : sauriez-vous prouver que vous étiez du bon côté, si on vous accusait de l'étape suivante ?"},
+
+  {id:"voix",name:"LA VOIX",
+   intro:"Trois secondes d'audio suffisent. Vous en publiez plusieurs heures par mois.",
+   rungs:[
+    "Vous clonez votre propre voix pour narrer une vidéo.",
+    "Vous clonez la voix d'un acteur, qui a signé un contrat et qui est payé.",
+    "Vous clonez la voix d'un chanteur mort, pour un hommage.",
+    "Vous clonez la voix de votre professeur pour une blague dans le groupe de classe.",
+    "Vous clonez la voix de votre mère pour piéger votre père.",
+    "Quelqu'un clone votre voix pour demander de l'argent à votre mère."
+   ],
+   punch:"L'ÉTAPE 6 UTILISE EXACTEMENT LA MÊME TECHNOLOGIE QUE L'ÉTAPE 1.",
+   txt:"Il n'y a aucune différence technique entre l'usage le plus légitime et l'escroquerie. La seule variable est le consentement de la personne dont la voix est reproduite, et cette variable disparaît complètement à l'étape 3 : personne ne peut plus donner son accord. À l'étape 4, dans la plupart des systèmes juridiques, ce n'est plus une blague mais une usurpation d'identité.",
+   src:"",
+   q:"À partir de quelle étape l'accord de la personne devient-il obligatoire ? Et à l'étape 3, qui donne cet accord ?"},
+
+  {id:"data",name:"LES DONNÉES",
+   intro:"Celle-ci vous concerne directement : c'est votre mémoire, et c'est le cœur de l'intégrité scientifique.",
+   rungs:[
+    "Vous utilisez des statistiques publiques dans votre travail.",
+    "Vous retirez une réponse aberrante de votre enquête.",
+    "Vous arrondissez un pourcentage pour que le graphique soit plus lisible.",
+    "Il vous manque 12 réponses sur 100 : vous demandez à l'IA de les générer de façon plausible.",
+    "Votre enquête n'a jamais eu lieu : l'IA a généré les 100 réponses.",
+    "Vous publiez, et quelqu'un vous demande votre fichier de données brutes."
+   ],
+   punch:"L'ÉTAPE 4 EST LA PLUS DANGEREUSE, PARCE QU'ELLE SE JUSTIFIE.",
+   txt:"Retirer un outlier se défend, arrondir se défend, et compléter douze réponses manquantes « pour ne pas perdre l'échantillon » se défend aussi — avec des mots presque identiques. C'est pourtant à cette étape que vous cessez de décrire le monde pour le fabriquer. Et un jeu de données inventé de façon plausible est indétectable : en 2024, une revue à comité de lecture a publié puis retiré un article contenant des figures manifestement générées, que la relecture n'avait pas arrêtées. L'intégrité ne repose donc pas sur la détection, elle repose sur la déclaration.",
+   src:"Rétractation d'un article de la revue Frontiers, février 2024 ; définitions de la fabrication et de la falsification de données.",
+   q:"À l'étape 4, vous n'avez menti sur aucun chiffre existant. Alors sur quoi avez-vous menti ?"}
+  ];
+
+  /* ======================================================
+     ROUND 4 — ÉPREUVES DU CLASS AI ACT
+     ====================================================== */
+
+  var EPREUVES = [
+  {n:"LE SERVEUR AU NEVADA",
+   sit:"Le service qui a généré les images est hébergé au Nevada. L'entreprise n'a aucun bureau en Europe. L'utilisateur est un élève de Bruxelles.",
+   q:"Si votre réponse est « on bloque le site », dites qui exécute le blocage, en combien de temps, et ce qui se passe le lendemain avec un autre nom de domaine."},
+  {n:"L'AUTEUR A QUATORZE ANS",
+   sit:"Celui qui a généré et diffusé les images est en troisième secondaire. La victime est dans sa classe.",
+   q:"Punir un mineur et protéger une mineure : votre loi arbitre, ou elle se tait et laisse l'école s'arranger ?"},
+  {n:"VOS DEUX LOIS SE CONTREDISENT",
+   sit:"Votre loi de transparence exige de pouvoir prouver qu'un contenu a été généré. Votre loi de protection des données interdit de conserver l'historique qui permettrait de le prouver.",
+   q:"Laquelle gagne, et qui tranche : un juge, un régulateur, ou celui des deux camps qui a les meilleurs avocats ?"},
+  {n:"LA LOI QUI COÛTE DES VIES",
+   sit:"Votre loi interdit toute décision médicale non explicable. Un système non explicable détecte certains cancers onze mois plus tôt que les médecins.",
+   q:"Vous maintenez l'interdiction ? Alors combien de mois de retard au diagnostic votre principe vaut-il ? Donnez un nombre, à voix haute."},
+  {n:"LE CONTRÔLEUR N'EXISTE PAS",
+   sit:"Votre loi impose un audit annuel indépendant. Il y a des dizaines de milliers de systèmes concernés dans le pays, et l'autorité de contrôle compte douze personnes.",
+   q:"Une loi que personne ne contrôle protège qui, exactement ? Et à qui profite-t-elle d'exister quand même ?"},
+  {n:"ET VOUS ?",
+   sit:"Votre loi s'applique-t-elle à votre école ? À ce cours ? À l'IA que vous avez utilisée cette semaine pour préparer un travail ?",
+   q:"Une règle dont ses auteurs s'exemptent : comment l'appelle-t-on ? Relisez vos trois lois et cherchez l'exemption."},
+  {n:"IL A CLIQUÉ SUR ACCEPTER",
+   sit:"L'utilisateur a coché la case. Il avait dix-neuf ans, il voulait le service, la case était pré-cochée et le texte faisait quarante pages.",
+   q:"Est-ce un consentement ? Si oui, votre loi ne sert à rien. Si non, quel critère vérifiable la remplace ?"},
+  {n:"L'EMPLOYÉE QUI A PARLÉ",
+   sit:"Une employée a découvert que son entreprise violait votre loi. Elle l'a dit à la presse. L'entreprise engage une procédure de licenciement.",
+   q:"Sans elle, personne n'aurait rien su. Que vaut-elle dans votre dispositif, et qui paie son avocat ?"}
+  ];
+
+  /* ======================================================
+     DÉROULÉ
+     ====================================================== */
+
+  var STEPS = [
+
+  {t:"boot"},
+
+  /* ---------- ROUND 1 ---------- */
+  {t:"title",k:"ROUND 1 / 4",h:"DÉCISIONS ET FAITS",
+   txt:"Cinq produits à lancer ou non, puis quatre chiffres à situer. Toute la classe est un seul laboratoire : soixante secondes de débat, vote à main levée, puis la conséquence.",
+   src:"Les touches A, B et C votent. Les flèches naviguent. La barre d'espace lance le chrono."},
+
+  {t:"dec",id:"cv",k:"ROUND 1 · CAS 01 — LE TRI",
+   sit:"Votre IA trie 15 000 CV par an. Elle a appris sur dix ans d'embauches passées de l'entreprise.",
+   opts:[
+    {v:"a",t:"LANCER",d:"Le gain est immédiat.",g:{p:18,s:-22},flag:"cv_raw",
+     punch:"LE CV DE MOHAMMED N'EST JAMAIS ARRIVÉ SUR LE BUREAU.",
+     txt:"L'Université de Washington a testé des modèles de tri sur 3 millions de combinaisons poste, nom et genre. Les CV portant un prénom associé à une personne blanche sont préférés dans 85 % des cas. Les prénoms d'hommes noirs ne sont presque jamais classés en tête. Le système ne signale rien : il rend une liste propre, ordonnée, parfaitement plausible.",
+     src:"Wilson & Caliskan, AAAI/ACM Conference on AI, Ethics and Society, 2024.",
+     why:"Le gain de productivité est réel, d'où le PROGRESS. Mais 15 000 personnes par an sont triées par un système que personne n'a audité, et aucune ne saura pourquoi elle a été écartée. Une discrimination humaine se fait une candidature à la fois ; celle-ci se fait 15 000 fois, à l'identique.",
+     q:"Combien de temps faut-il pour repérer une discrimination qui ne laisse aucune trace écrite ?"},
+    {v:"b",t:"SOUS CONDITIONS",d:"Garde-fous imposés.",g:{p:10,s:-6},
+     punch:"DITES LAQUELLE. MAINTENANT, À VOIX HAUTE.",
+     txt:"Le labo retient : audit de biais par un tiers, décision finale toujours humaine, droit de recours du candidat. Le gain passe de 70 % à 40 % de temps recruteur, et deux personnes passent à temps plein sur la conformité.",
+     src:"",
+     why:"Moins de PROGRESS que le lancement brut, parce que la condition coûte deux salaires et un tiers du gain. La SOCIETY baisse quand même : le tri automatique continue, il est seulement surveillé. Si votre condition ne coûtait rien, c'est qu'elle ne changeait rien.",
+     q:"Votre condition est-elle vérifiable par quelqu'un d'extérieur ? Sinon ce n'est pas une condition, c'est une intention."},
+    {v:"c",t:"NE PAS LANCER",d:"Trop risqué.",g:{p:-6,s:4},
+     punch:"VOTRE CONCURRENT LE LANCE TROIS MOIS PLUS TARD.",
+     txt:"Il communique sur le recrutement augmenté et prend le marché. Vos 15 000 candidats restent évalués par des humains, qui discriminent aussi — les tests de candidature le montrent en Belgique depuis vingt ans — mais un dossier à la fois.",
+     src:"",
+     why:"PROGRESS baisse parce que l'inaction a un coût commercial documenté. SOCIETY monte peu, et c'est volontaire : vous n'avez pas résolu le biais, vous avez refusé de l'industrialiser.",
+     q:"Refuser, est-ce protéger les gens, ou refuser de voir que le problème existait déjà sans l'IA ?"}
+   ]},
+
+  {t:"dec",id:"diag",k:"ROUND 1 · CAS 02 — LE DIAGNOSTIC",
+   sit:"Une IA détecte certains cancers onze mois plus tôt que les médecins. Personne ne sait expliquer comment elle décide.",
+   opts:[
+    {v:"a",t:"LANCER",d:"Elle sauve des vies.",g:{p:16,s:-14},
+     punch:"C'EST VOTRE MÈRE. LE SYSTÈME S'EST TROMPÉ. PERSONNE NE PEUT DIRE POURQUOI.",
+     txt:"Elle a suivi un traitement lourd pour une tumeur qu'elle n'avait pas. Vous demandez sur quoi la machine s'est basée. La réponse honnête est : sur des dizaines de millions de paramètres, et non, on ne peut pas les lire. La même année, le même système a détecté à temps les cancers de trois cents autres personnes.",
+     src:"",
+     why:"Le gain médical se compte en vies, d'où le PROGRESS. Ce que perd la SOCIETY, c'est le droit de comprendre une décision qui vous concerne : plus personne à qui demander pourquoi, donc plus personne à tenir pour responsable.",
+     q:"Les trois cents vies sauvées justifient-elles celle-là ? Répondez comme gouvernement. Puis répondez comme fils ou fille."},
+    {v:"b",t:"SOUS CONDITIONS",d:"Contresignature médicale.",g:{p:9,s:4},
+     punch:"L'IA PROPOSE, LE MÉDECIN SIGNE, QUELQU'UN EST RESPONSABLE.",
+     txt:"Le gain de détection passe de onze à huit mois, le temps de la validation humaine. En échange, il y a toujours un nom au bas de la décision et un recours possible.",
+     src:"",
+     why:"SOCIETY remonte parce que la responsabilité redevient localisable, ce qui est la condition de tout recours. Le PROGRESS baisse de la valeur exacte des trois mois perdus : c'est le prix de la supervision humaine, et ce n'est pas rien.",
+     q:"Un médecin qui contresigne sans pouvoir vérifier : garantie réelle, ou signature de confort ?"},
+    {v:"c",t:"NE PAS LANCER",d:"Pas d'IA sur du diagnostic.",g:{p:-6,s:-4},
+     punch:"LE STATU QUO TUE AUSSI. IL NE FAIT PAS LA UNE.",
+     txt:"Onze mois de retard au diagnostic, pour tout le monde, chaque année, comme avant. Refuser une technologie imparfaite, c'est accepter les défauts de celle qui est déjà en place.",
+     src:"",
+     why:"Les deux jauges baissent, seul cas du round. Ne rien faire n'est pas un point neutre : c'est un choix dont les victimes sont statistiques, donc invisibles, donc jamais imputées à personne.",
+     q:"À quel niveau de preuve accepteriez-vous de changer d'avis ? Donnez un chiffre."}
+   ]},
+
+  {t:"dec",id:"tuteur",k:"ROUND 1 · CAS 03 — LE PROF",
+   sit:"L'école remplace une partie des feedbacks par un tuteur IA disponible 24 h/24. Les conversations sont analysées et conservées cinq ans.",
+   opts:[
+    {v:"a",t:"LANCER",d:"Les résultats montent.",g:{p:15,s:-10},flag:"tut_raw",
+     punch:"UN ÉTUDIANT ÉCRIT À 3 H DU MATIN QU'IL N'Y ARRIVE PLUS.",
+     txt:"Ce message est stocké. Il sert à améliorer le modèle. Il est techniquement accessible à l'éditeur, à son hébergeur, à ses sous-traitants, et à quiconque obtiendra un accès à cette base dans les cinq prochaines années. L'étudiant, lui, pensait parler à un tuteur.",
+     src:"",
+     why:"La progression pédagogique est réelle et se paie en PROGRESS. Ce que perd la SOCIETY, c'est une base de données des fragilités de vos propres étudiants, constituée sans qu'ils en mesurent la portée, et impossible à effacer une fois dupliquée.",
+     q:"Qu'avez-vous, vous, déjà écrit à une IA que vous ne diriez pas à un professeur ?"},
+    {v:"b",t:"SOUS CONDITIONS",d:"Anonyme, effacé à 30 jours.",g:{p:9,s:-2},
+     punch:"VOUS ACCEPTEZ D'ÊTRE MOINS PERFORMANTS.",
+     txt:"Conversations anonymisées, effacées après trente jours, et le tuteur n'intervient jamais dans l'évaluation certificative. Le modèle s'améliore plus lentement. Les étudiants l'utilisent davantage, parce qu'ils lui font confiance.",
+     src:"",
+     why:"Le PROGRESS est amputé parce que les données sont le carburant de l'amélioration et que vous venez de le rationner. La SOCIETY tient presque : la donnée qui n'est pas conservée est la seule qui ne fuitera jamais.",
+     q:"Qui, dans une école, a réellement le pouvoir d'imposer cette clause à un fournisseur ?"},
+    {v:"c",t:"NE PAS LANCER",d:"Feedback 100 % humain.",g:{p:-5,s:3},
+     punch:"CEUX QUI N'OSENT PAS LEVER LA MAIN CONTINUENT DE NE PAS OSER.",
+     txt:"Restent 180 étudiants par enseignant, des délais de correction de deux semaines et une disponibilité de neuf heures par jour. Ceux qui osent demander de l'aide continuent d'en recevoir.",
+     src:"",
+     why:"SOCIETY monte légèrement : aucune donnée collectée, aucune fuite possible, aucune dépendance à un éditeur. PROGRESS recule parce que le statu quo a lui aussi des victimes, simplement elles ne font pas la une.",
+     q:"Le tuteur 24/7 servait surtout à qui : aux meilleurs, ou à ceux qui n'osent pas parler ?"}
+   ]},
+
+  {t:"dec",id:"prod",k:"ROUND 1 · CAS 04 — LA PRODUCTION",
+   sit:"Votre agence remplace 60 % de sa production visuelle par de l'IA. Production ×5, prix divisés par trois, douze freelances sur vingt non reconduits.",
+   opts:[
+    {v:"a",t:"LANCER",d:"On industrialise.",g:{p:20,s:-18},
+     punch:"LE POSTE DE JUNIOR SUPPRIMÉ, DANS CINQ ANS, C'EST LE VÔTRE.",
+     txt:"Le Stanford Digital Economy Lab mesure en 2026 un écart d'emploi de 19 % pour les 22-25 ans dans les métiers les plus exposés à l'IA, comparés aux travailleurs plus âgés des mêmes entreprises. Ce ne sont pas des licenciements : ce sont des recrutements qui ne se font plus. Et les tâches supprimées sont celles sur lesquelles on apprenait le métier.",
+     src:"Stanford Digital Economy Lab, « Canaries in the Coal Mine? », août 2026.",
+     why:"Les marges explosent, d'où le PROGRESS. La SOCIETY paie la disparition de la marche d'entrée : une agence sans juniors est une agence sans seniors dans dix ans, et ce coût n'apparaîtra dans aucun bilan avant 2032.",
+     q:"Si plus personne ne recrute de junior, qui sera directeur artistique en 2035 ?"},
+    {v:"b",t:"SOUS CONDITIONS",d:"L'IA exécute, l'humain dirige.",g:{p:12,s:-5},
+     punch:"LE JUNIOR NE PRODUIT PLUS. IL PILOTE, VÉRIFIE, CORRIGE.",
+     txt:"Production ×3 au lieu de ×5, mais votre signature visuelle reste identifiable — et c'est précisément ce que les clients paient plus cher une fois que tout le monde a les mêmes outils.",
+     src:"",
+     why:"Vous gardez l'essentiel du gain et une porte d'entrée dans le métier, d'où une SOCIETY qui ne s'effondre pas. Mais c'est un autre métier qu'il faut enseigner, et ce coût de formation est réel.",
+     q:"Nommez trois compétences que ce nouveau junior doit avoir et que le programme actuel ne donne pas."},
+    {v:"c",t:"NE PAS LANCER",d:"Tout à la main.",g:{p:-8,s:6},
+     punch:"TROIS CLIENTS PARTENT CHEZ UNE AGENCE TROIS FOIS MOINS CHÈRE.",
+     txt:"Deux reviennent six mois plus tard en disant que la qualité ne suivait pas. Le positionnement artisanal existe et se défend, mais il suppose des clients capables de voir la différence et prêts à la payer.",
+     src:"",
+     why:"PROGRESS chute : vous refusez un gain que le marché a déjà intégré dans ses prix. SOCIETY monte franchement parce que vingt freelances gardent leur revenu, ce qui reste le seul effet social mesurable de cette décision.",
+     q:"Quel client paie encore trois fois le prix pour du fait main ? Décrivez-le précisément."}
+   ]},
+
+  {t:"dec",id:"usine",k:"ROUND 1 · CAS 05 — L'USINE",
+   sit:"Une IA très énergivore réduit de 18 % les déchets d'un site industriel. Elle consomme l'équivalent de 400 foyers par an et évite 12 000 tonnes de déchets.",
+   opts:[
+    {v:"a",t:"LANCER",d:"Le bilan net est positif.",g:{p:14,e:4},
+     punch:"L'IA POLLUE. ET LE BILAN RESTE POSITIF.",
+     txt:"400 foyers d'électricité contre 12 000 tonnes de déchets évités : le solde est favorable et mesurable. À condition de le recalculer chaque année, parce que les modèles grossissent plus vite que leurs gains.",
+     src:"",
+     why:"PLANET monte, ce qui surprend toujours : la jauge environnementale ne mesure pas la consommation, elle mesure le solde. Une IA qui consomme beaucoup et évite davantage améliore le bilan. Une IA sobre qui n'évite rien ne l'améliore pas.",
+     q:"Que se passe-t-il le jour où il faut doubler la taille du modèle pour gagner deux points de performance ?"},
+    {v:"b",t:"SOUS CONDITIONS",d:"Mesure avant / après.",g:{p:8,e:8},
+     punch:"VOUS EXIGEZ DE MESURER AVANT DE BRANCHER.",
+     txt:"Bilan complet avant déploiement et hébergement sur un réseau bas carbone. Le projet démarre six mois plus tard, avec un impact net deux fois meilleur.",
+     src:"",
+     why:"Meilleur résultat environnemental du cas, parce que c'est le seul où quelqu'un a mesuré l'état initial. Le PROGRESS est amputé du retard au démarrage, qui est le prix exact de la rigueur.",
+     q:"Pourquoi, en pratique, presque personne ne mesure l'avant ?"},
+    {v:"c",t:"NE PAS LANCER",d:"Trop énergivore.",g:{p:-5,e:-6},
+     punch:"VOUS AVEZ REFUSÉ AU NOM DE L'ENVIRONNEMENT. L'ENVIRONNEMENT Y PERD.",
+     txt:"Les 12 000 tonnes de déchets sont toujours là, chaque année. Le raccourci « IA = pollution » vient de vous coûter des points sur la jauge que vous vouliez protéger.",
+     src:"",
+     why:"PLANET baisse parce que le statu quo a un coût environnemental que votre refus n'a pas supprimé : il l'a laissé hors du calcul. C'est l'erreur la plus fréquente du débat public sur l'IA et l'environnement.",
+     q:"Quelle information vous aurait fait voter autrement ? Vous l'aviez à l'écran."}
+   ]},
+
+  {t:"news",id:"n1",dyn:"n1"},
+
+  {t:"quiz",id:"q1",k:"ROUND 1 · FAIT 01 — SAINT-GHISLAIN, HAINAUT",
+   sit:"Le data center de Google à Saint-Ghislain, à une heure de route d'ici. Combien d'eau consomme-t-il par an ?",
+   opts:[{v:"a",t:"1 000 MÉNAGES",d:""},{v:"b",t:"10 700 MÉNAGES",d:"",right:true},{v:"c",t:"100 000 MÉNAGES",d:""}],
+   punch:"UN MILLION DE MÈTRES CUBES PAR AN. CHIFFRE PUBLIÉ PAR GOOGLE.",
+   txt:"Soit la consommation annuelle d'environ 10 700 ménages wallons, pour un seul site. Maintenant attaquez la comparaison, parce qu'elle est fragile : 96 % de cette eau est non potable et prélevée dans le canal Nimy-Blaton qui borde le site, 70 % s'évapore, 30 % repart dans la Haine à température proche. Un ménage, lui, consomme de l'eau potable traitée. Le volume est exact, l'équivalence est trompeuse.",
+   src:"Rapport environnemental de Google, données 2022, relayé par L'Avenir et La Libre en juillet 2023.",
+   why:"PLANET monte si la classe a situé l'ordre de grandeur. Mais le vrai point est ailleurs : un chiffre juste peut porter une comparaison fausse, et c'est le métier de ceux qui rédigent les communiqués comme de ceux qui rédigent les tracts.",
+   q:"Si l'eau de canal ne se compare pas à l'eau du robinet, pourquoi la Wallonie a-t-elle refusé le pompage dans la Sambre trois ans plus tard ?"},
+
+  {t:"quiz",id:"q2",k:"ROUND 1 · FAIT 02 — LA SAMBRE, AOÛT 2026",
+   sit:"Google demande à pomper 600 m³ d'eau par heure dans la Sambre pour refroidir son data center IA à Aiseau-Presles. 400 emplois annoncés. Que décide la Région wallonne ?",
+   opts:[{v:"a",t:"ELLE ACCEPTE",d:"400 emplois dans le Hainaut."},{v:"b",t:"SOUS CONDITIONS",d:"Quotas et suivi."},{v:"c",t:"ELLE REFUSE",d:"",right:true}],
+   punch:"REFUS. PRINCIPE DE PRÉCAUTION.",
+   txt:"En août 2026, le ministre wallon François Desquesnes refuse la modification de permis. Motif : la répétition des épisodes caniculaires et le risque de tension sur la disponibilité en eau. L'été précédent, 28 000 m³ avaient déjà dû être pompés ailleurs pour maintenir les niveaux. Voilà la réponse à la question précédente : l'eau de rivière n'est pas de l'eau potable, mais en canicule elle manque quand même, à l'agriculture, à la navigation et aux poissons.",
+   src:"L'Avenir et La DH, 15-17 août 2026. Google a annoncé en octobre 2025 cinq milliards d'euros d'investissement en infrastructures IA en Belgique jusqu'en 2027.",
+   why:"PLANET monte si vous aviez anticipé la décision : savoir lire un arbitrage public fait partie du métier, et ce refus était prévisible pour qui suit les dossiers d'eau en Wallonie depuis deux étés.",
+   q:"Quatre cents emplois contre un fleuve en canicule. Vous tranchez quoi, et devant qui l'assumez-vous ?"},
+
+  {t:"quiz",id:"q3",k:"ROUND 1 · FAIT 03 — IRLANDE",
+   sit:"En Irlande, les data centers consomment quelle part de l'électricité du pays ?",
+   opts:[{v:"a",t:"5 %",d:""},{v:"b",t:"12 %",d:""},{v:"c",t:"23 %",d:"",right:true}],
+   punch:"23 %. PRESQUE AUTANT QUE TOUS LES FOYERS IRLANDAIS RÉUNIS.",
+   txt:"Chiffre publié par l'office statistique irlandais en juillet 2026 pour l'année 2025. Dublin a gelé les nouveaux raccordements au réseau. À l'échelle mondiale, les data centers pèsent environ 1,5 % de l'électricité : la moyenne planétaire rassure, la réalité locale non. Le problème n'est pas la quantité, c'est la concentration.",
+   src:"Central Statistics Office (Irlande), juillet 2026 ; AIE, « Energy and AI », 2025 pour la moyenne mondiale.",
+   why:"PLANET monte si vous avez saisi que la question environnementale de l'IA est d'abord un problème de territoire et de réseau électrique, pas une moyenne mondiale.",
+   q:"Qu'est-ce qui rend un pays attractif pour ces implantations, et la Belgique coche combien de cases ?"},
+
+  {t:"quiz",id:"q4",k:"ROUND 1 · FAIT 04 — LE PARADOXE",
+   sit:"Une requête IA consomme aujourd'hui à peu près autant qu'une recherche web : les modèles ont été massivement optimisés. Alors pourquoi la consommation totale double-t-elle ?",
+   opts:[{v:"a",t:"LES CHIFFRES SONT FAUX",d:""},{v:"b",t:"C'EST SI PEU CHER QU'ON EN FAIT MILLE FOIS PLUS",d:"",right:true},{v:"c",t:"LES MODÈLES RESTENT TROP GOURMANDS",d:""}],
+   punch:"L'EFFET REBOND.",
+   txt:"Quand une technologie devient plus efficace et moins chère, on l'utilise beaucoup plus, et le total augmente malgré des gains unitaires réels. C'est pourquoi « l'IA devient plus sobre » et « l'IA consomme de plus en plus » sont vrais en même temps. L'AIE projette environ 945 TWh pour les data centers en 2030, contre 415 TWh en 2024.",
+   src:"AIE, « Energy and AI », 2025. Les estimations par requête varient d'un facteur dix selon la source et le périmètre.",
+   why:"PLANET monte parce que c'est le mécanisme que la plupart des campagnes sur l'IA verte passent sous silence, et qu'un marketeur qui le connaît ne se fait pas avoir par une promesse d'efficacité.",
+   q:"Citez une innovation qui a rendu un usage plus efficace et fait exploser la consommation totale. Le marketing en est plein."},
+
+  {t:"news",id:"n2",dyn:"n2"},
+
+  /* ---------- ROUND 2 ---------- */
+  {t:"draw",k:"ROUND 2 / 4"},
+  {t:"slot",n:0},{t:"slot",n:1},{t:"slot",n:2},
+  {t:"slot",n:3},{t:"slot",n:4},{t:"slot",n:5},
+
+  /* ---------- ROUND 3 : OÙ EST LA LIGNE ---------- */
+  {t:"title",k:"ROUND 3 / 4",h:"OÙ EST LA LIGNE ?",
+   txt:"Quatre échelles. Chacune part de quelque chose que tout le monde fait, et monte marche par marche jusqu'à quelque chose que personne ne défendrait. La classe tranche à chaque marche : OK, PAS OK, ça dépend.",
+   src:"Il n'y a pas de bonne réponse aux marches. Il y a une ligne, et elle doit pouvoir se dire à voix haute."},
+
+  {t:"chain",n:0},{t:"chain",n:1},{t:"chain",n:2},{t:"chain",n:3},
+
+  /* ---------- ROUND 4 : THE CLASS AI ACT ---------- */
+  {t:"title",k:"ROUND 4 / 4",h:"THE CLASS AI ACT",
+   txt:"Nous sommes en 2035. Vous êtes le gouvernement et vous ne pouvez introduire que trois règles. Chaque équipe en propose une, la classe vote, on garde les trois meilleures. Ensuite, huit épreuves. Puis la comparaison avec la loi réelle.",
+   src:"Une règle doit dire qui contrôle, comment on prouve l'infraction, et ce qui se passe en cas de manquement."},
+
+  {t:"laws",k:"ROUND 4 · VOS TROIS LOIS"},
+  {t:"ep",n:0},{t:"ep",n:1},{t:"ep",n:2},{t:"ep",n:3},
+  {t:"ep",n:4},{t:"ep",n:5},{t:"ep",n:6},{t:"ep",n:7},
+  {t:"aiact",k:"ROUND 4 · LA LOI QUI EXISTE DÉJÀ"},
+  {t:"bilan",k:"BILAN DE SESSION"},
+  {t:"recap",k:"RÉCAPITULATIF IMPRIMABLE"},
+  {t:"end"}
+  ];
+
+  var AIACT=[
+   ["APPROCHE PAR RISQUE","L'AI Act européen ne régule pas « l'IA ». Il régule des usages, classés selon le risque qu'ils font peser sur les droits des personnes. C'est exactement le tri que vous venez de faire pendant une heure."],
+   ["RECRUTEMENT, ÉCOLE, SANTÉ","Les trois premiers cas du Round 1 sont classés haut risque : documentation des données, supervision humaine et évaluation de conformité avant mise sur le marché."],
+   ["PRATIQUES INTERDITES","Notation sociale, manipulation exploitant une vulnérabilité, et reconnaissance des émotions au travail et dans les établissements d'enseignement. Votre école est explicitement visée."],
+   ["TRANSPARENCE DES CONTENUS","Les contenus générés doivent être identifiables, les deepfakes signalés. C'est la règle que presque toutes les classes réinventent spontanément."],
+   ["CE QUE LA LOI NE FAIT PAS","Aucun plafond environnemental, aucune protection des postes juniors, rien sur les images intimes non consenties entre élèves, rien sur les données d'une personne décédée. Vos lois vont peut-être plus loin que le texte réel."]
+  ];
+
+  /* ======================================================
+     ÉTAT
+     ====================================================== */
+
+  var st={i:0,g:{p:60,e:60,s:60},log:[],laws:["","",""],done:{},flags:{},draw:null,sv:{},chain:{},nteam:6};
+  var $s=document.getElementById("stage"),$gz=document.getElementById("gz"),
+      $pos=document.getElementById("pos"),$pv=document.getElementById("prev"),
+      $nx=document.getElementById("next"),$rs=document.getElementById("rst"),
+      $tm=document.getElementById("tm"),$stat=document.getElementById("stat");
+  var NM={p:"PROGRESS",e:"PLANET",s:"SOCIETY"};
+
+  function bar(v){
+    var f=Math.round(Math.max(0,Math.min(100,v))/5),o="";
+    for(var i=0;i<20;i++)o+=i<f?"█":"░";
+    return o;
+  }
+  function buildG(){
+    var h="";["p","e","s"].forEach(function(k){
+      h+='<div class="g" data-k="'+k+'" id="g-'+k+'"><span class="nm">'+NM[k]+
+         '</span><span class="bar" id="b-'+k+'"></span><span class="val" id="v-'+k+
+         '"></span><span class="chip" id="c-'+k+'"></span></div>';
+    });$gz.innerHTML=h;
+  }
+  function paintG(){
+    var lo=false;
+    ["p","e","s"].forEach(function(k){
+      var v=st.g[k];
+      document.getElementById("b-"+k).textContent=bar(v);
+      document.getElementById("v-"+k).textContent=v;
+      var l=v<30;if(l)lo=true;
+      document.getElementById("g-"+k).classList.toggle("low",l);
+    });
+    $stat.innerHTML=lo?'SYS <b style="color:var(--amb)">ALERTE</b>':"SYS <b>READY</b>";
+  }
+  function delta(d){
+    ["p","e","s"].forEach(function(k){
+      var v=(d||{})[k]||0;if(!v)return;
+      st.g[k]=Math.max(0,Math.min(100,st.g[k]+v));
+      var c=document.getElementById("c-"+k);
+      c.textContent=(v>0?"+":"")+v;c.className="chip "+(v>0?"up":"dn");
+      void c.offsetWidth;c.classList.add("go");
+    });
+    paintG();
+  }
+  function dl(d){
+    var o=[];
+    ["p","e","s"].forEach(function(k){
+      var v=(d||{})[k]||0;
+      if(v)o.push('<span class="'+(v>0?"gp":"neg")+'">'+NM[k]+" "+(v>0?"+":"−")+Math.abs(v)+"</span>");
+    });
+    if(!o.length)o.push('<span class="nil">AUCUN IMPACT</span>');
+    return '<div class="dl">'+o.join("")+"</div>";
+  }
+
+  /* ---------- chrono ---------- */
+  var T={l:0,id:null,run:false};
+  function setT(s){
+    if(T.id){clearInterval(T.id);T.id=null;}T.run=false;T.l=s||0;
+    $tm.className="tm";$tm.textContent=s?f2(s):"--:--";$tm.style.opacity=s?1:.3;
+  }
+  function f2(s){var m=Math.floor(s/60),r=s%60;return m+":"+(r<10?"0":"")+r;}
+  function togT(){
+    if(!T.l)return;
+    if(T.run){clearInterval(T.id);T.id=null;T.run=false;$tm.classList.remove("run");return;}
+    T.run=true;$tm.classList.add("run");
+    T.id=setInterval(function(){
+      T.l--;$tm.textContent=f2(Math.max(0,T.l));
+      if(T.l<=0){clearInterval(T.id);T.id=null;T.run=false;$tm.className="tm out";bp();}
+    },1000);
+  }
+  function bp(){try{var A=window.AudioContext||window.webkitAudioContext;if(!A)return;
+    var c=new A(),o=c.createOscillator(),g=c.createGain();
+    o.type="square";o.frequency.value=440;g.gain.value=.05;
+    o.connect(g);g.connect(c.destination);o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.7);o.stop(c.currentTime+.75);}catch(e){}}
+
+  /* ======================================================
+     RENDU
+     ====================================================== */
+
+  function e(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  var KEY=["A","B","C"];
+  var R={};
+
+  R.boot=function(){
+    return '<div class="kick">&gt; AI-LAB-2035 · SYSTÈME DE DÉCISION · CHARGEMENT TERMINÉ<br>'+
+      '&gt; MODE : CLASSE ENTIÈRE, UN SEUL LABORATOIRE<br>'+
+      '&gt; JAUGES INITIALISÉES À 60 / 60 / 60</div>'+
+      '<h1>VOUS ÊTES UN LABORATOIRE D\'IA. LA CLASSE ENTIÈRE.<span class="cur">_</span></h1>'+
+      '<p class="txt">Chaque décision prise ensemble fait bouger les trois jauges en haut de l\'écran, et chaque point gagné ou perdu est justifié à l\'écran.</p>'+
+      '<p class="txt">Le score final n\'est pas le total. C\'est votre jauge la plus basse. Un laboratoire qui finit à 100 / 20 / 30 a échoué.</p>'+
+      '<ul class="plain" style="margin-top:26px">'+
+      '<li><h3>PROGRESS</h3><p>Ce que vous produisez : innovation, efficacité, compétitivité.</p></li>'+
+      '<li><h3>PLANET</h3><p>Ce que vous prélevez : énergie, eau, matériaux, déchets.</p></li>'+
+      '<li><h3>SOCIETY</h3><p>Ce que vous déplacez : emploi, biais, vie privée, confiance.</p></li>'+
+      '</ul>'+
+      '<p class="src" style="margin-top:24px">Sous 30, une jauge passe en alerte. Sous 15, le laboratoire s\'effondre.<br>Touches A / B / C pour voter · flèches pour naviguer · espace pour le chrono.</p>';
+  };
+
+  R.title=function(s){
+    return '<div class="kick">&gt; '+e(s.k)+'</div><h1>'+e(s.h)+'</h1>'+
+      '<p class="txt">'+e(s.txt)+'</p><p class="src">'+e(s.src)+"</p>";
+  };
+
+  function opts(list,done,act){
+    return list.map(function(o,i){
+      var c="opt";
+      if(done){if(done.k===i)c+=" pick";if(o.right)c+=" right";}
+      return '<button class="'+c+'" data-act="'+act+'" data-k="'+i+'">'+
+        '<span class="key">['+KEY[i]+']</span><span class="t">'+e(o.t)+"</span>"+
+        (o.d?'<span class="d">'+e(o.d)+"</span>":"")+"</button>";
+    }).join("");
+  }
+
+  /* Révélation progressive : la phrase choc et les points d'abord.
+     Le reste s'affiche seulement quand l'enseignant clique. */
+  function revBlock(punch,txt,src,d,why,q){
+    var b="",x="";
+    b+='<button class="disc" data-act="disc" data-t="why">POURQUOI CES POINTS ?</button>';
+    x+='<div class="dbox" data-box="why" hidden><p class="why">'+e(why)+"</p></div>";
+    if(txt){
+      b+='<button class="disc" data-act="disc" data-t="fact">LE FAIT</button>';
+      x+='<div class="dbox" data-box="fact" hidden><p class="txt">'+e(txt)+"</p>"+
+         (src?'<p class="src">'+e(src)+"</p>":"")+"</div>";
+    }
+    if(q){
+      b+='<button class="disc" data-act="disc" data-t="q">LA QUESTION</button>';
+      x+='<div class="dbox" data-box="q" hidden><p class="q">'+e(q)+"</p></div>";
+    }
+    return '<div class="rev">'+(punch?'<p class="punch">'+e(punch)+"</p>":"")+dl(d)+
+      '<div class="discs">'+b+"</div>"+x+"</div>";
+  }
+
+  /* Avant le vote : la situation en grand et les trois options, rien d'autre.
+     Après le vote : les options disparaissent et la phrase choc prend la place. */
+  function askOrReveal(k,sit,list,d,act,rev,chLabel){
+    if(!d) return '<div class="kick">&gt; '+e(k)+"</div>"+
+      '<p class="sit">'+e(sit)+"</p>"+
+      '<div class="vote">'+opts(list,null,act)+"</div>";
+    return '<div class="kick">&gt; '+e(k)+"</div>"+
+      '<p class="sit sm">'+e(sit)+"</p>"+
+      '<p class="choice">&gt; '+e(chLabel)+"</p>"+rev;
+  }
+
+  R.dec=function(s){
+    var d=st.done[s.id],o=d?s.opts[d.k]:null;
+    return askOrReveal(s.k,s.sit,s.opts,d,"dec",
+      o?revBlock(o.punch,o.txt,o.src,o.g,o.why,o.q).replace('<div class="rev">','<div class="rev" style="border-top:none;padding-top:0;margin-top:0">'):"",
+      o?"CHOIX DE LA CLASSE : "+o.t:"");
+  };
+
+  R.quiz=function(s){
+    var d=st.done[s.id],good=s.opts.filter(function(o){return o.right;})[0],r="";
+    if(d)r=revBlock(s.punch,s.txt,s.src,d.ok?{e:6}:{},
+      d.ok?s.why:"Aucun point : la classe s'est trompée d'ordre de grandeur. C'est l'intérêt de l'exercice — l'intuition collective sur ces chiffres est presque toujours fausse, dans un sens comme dans l'autre.",s.q)
+      .replace('<div class="rev">','<div class="rev" style="border-top:none;padding-top:0;margin-top:0">');
+    return askOrReveal(s.k,s.sit,s.opts,d,"quiz",r,
+      d?"RÉPONSE DE LA CLASSE : "+s.opts[d.k].t+(d.ok?" — JUSTE":" — BONNE RÉPONSE : "+(good?good.t:"—")):"");
+  };
+
+  /* ---------- ROUND 2 : tirage ---------- */
+  function drawPool(n){
+    var p=POOL.slice(),o=[];
+    while(o.length<n&&p.length)o.push(p.splice(Math.floor(Math.random()*p.length),1)[0]);
+    st.draw=o;st.done.pool={};
+  }
+  R.draw=function(s){
+    if(!st.draw)drawPool(st.nteam);
+    var l=st.draw.map(function(c,i){
+      return '<li><span class="eq">ÉQUIPE '+(i+1)+'</span><span class="dn">'+e(c.name)+
+        '</span><span class="tg">'+e(c.tag)+"</span></li>";
+    }).join("");
+    return '<div class="kick">&gt; '+e(s.k)+' · TRAVAIL EN ÉQUIPES</div>'+
+      '<h1>CHAQUE ÉQUIPE REÇOIT UN DOSSIER.</h1>'+
+      '<p class="txt">Dix minutes en équipe sur votre dossier : quelle est l\'opportunité, qu\'est-ce qui peut très mal tourner, que décidez-vous. Ensuite, mise en commun dossier par dossier : l\'équipe présente sa position, la classe vote, le laboratoire en assume les conséquences.</p>'+
+      '<ul class="teams">'+l+"</ul>"+
+      '<div class="vote" style="margin-top:26px;max-width:420px">'+
+        '<button class="opt" data-act="draw" data-n="4"><span class="key">[4]</span><span class="t">TIRER 4 DOSSIERS</span></button>'+
+        '<button class="opt" data-act="draw" data-n="6"><span class="key">[6]</span><span class="t">TIRER 6 DOSSIERS</span></button>'+
+        '<button class="opt" data-act="draw" data-n="8"><span class="key">[8]</span><span class="t">TIRER 8 DOSSIERS</span></button>'+
+        '<button class="opt" data-act="print" data-m="fiches"><span class="key">[F]</span><span class="t">IMPRIMER LES FICHES</span></button>'+
+      "</div>"+
+      '<p class="src" style="margin-top:18px">Réserve : '+POOL.length+' dossiers. Chaque fiche s\'imprime sur une page, avec la situation, les trois options et les questions à préparer — une équipe ne voit que la sienne.</p>';
+  };
+
+  R.slot=function(s){
+    if(!st.draw)drawPool(st.nteam);
+    var c=st.draw[s.n];
+    if(!c)return '<div class="kick">&gt; ROUND 2 · SLOT '+(s.n+1)+'</div>'+
+      '<h1>SLOT NON UTILISÉ.</h1><p class="txt">Ce tirage comptait moins de dossiers. Passez au suivant.</p>';
+    var d=(st.done.pool||{})[c.id],o=d?c.opts[d.k]:null;
+    return askOrReveal("ROUND 2 · ÉQUIPE "+(s.n+1)+" · "+c.name,c.sit,c.opts,d,"pool",
+      o?revBlock(c.punch,c.txt,c.src,o.g,o.why,c.q).replace('<div class="rev">','<div class="rev" style="border-top:none;padding-top:0;margin-top:0">'):"",
+      o?"POSITION RETENUE : "+o.t:"");
+  };
+
+  /* ---------- flashs ---------- */
+  R.news=function(s){
+    var d=s.dyn==="n1"?n1():n2();
+    if(!st.done["nw"+s.id]){st.done["nw"+s.id]=true;
+      st.log.push({ph:"FLASH",nm:"Breaking news",ch:"—",g:d.g});
+      setTimeout(function(){delta(d.g);},520);}
+    return '<div class="kick">&gt; <b>■ BREAKING NEWS ■</b></div>'+
+      '<h1>'+e(d.punch)+"</h1>"+
+      revBlock("",d.txt,"",d.g,d.why,d.q).replace('<div class="rev">','<div class="rev" style="border-top:none;padding-top:0;margin-top:0">');
+  };
+  function raws(){var n=0;["cv","diag","tuteur","prod","usine"].forEach(function(i){
+    if(st.done[i]&&st.done[i].v==="a")n++;});return n;}
+  function n1(){
+    var n=raws();
+    if(n>=3)return{g:{p:-12,s:-4},
+      punch:"TROIS DE VOS PRODUITS BASCULENT EN HAUT RISQUE.",
+      txt:"Documentation obligatoire, supervision humaine, évaluation de conformité avant commercialisation. Vous avez lancé vite et sans conditions : vous financez maintenant la mise en conformité rétroactive, produit par produit, avec des équipes qui devaient travailler sur autre chose.",
+      why:"PROGRESS chute du coût de la conformité rétroactive, toujours plus élevé que la conformité prévue dès la conception. La SOCIETY ne remonte pas : la loi arrive après les personnes concernées.",
+      q:"Combien vous aurait coûté la même exigence, décidée par vous, six mois plus tôt ?"};
+    if(n>=1)return{g:{p:-6,s:2},
+      punch:"UNE PARTIE DE VOTRE PORTEFEUILLE DOIT ÊTRE REPRISE.",
+      txt:"Les produits que vous aviez encadrés vous-mêmes passent le contrôle sans modification. Ceux lancés bruts doivent être repris. Vos conditions volontaires viennent de se transformer en avantage concurrentiel.",
+      why:"La perte de PROGRESS se limite à ce que vous n'aviez pas anticipé. Le léger gain social vient de ce que vos garde-fous existaient avant la contrainte.",
+      q:"Se réguler avant la loi : coût inutile, ou stratégie ?"};
+    return{g:{p:4,s:4},
+      punch:"VOTRE LABORATOIRE EST CITÉ EN EXEMPLE.",
+      txt:"Vous aviez déjà imposé en interne ce que la réglementation rend obligatoire. Aucune mise en conformité à financer, et un argument commercial que vos concurrents n'ont pas.",
+      why:"Les deux jauges montent parce que la prudence, ici, n'a pas coûté de vitesse : elle a évité une dépense et créé une différenciation. Ce n'est pas toujours vrai, c'est vrai cette fois.",
+      q:"Qu'est-ce que cette prudence vous a coûté en parts de marché entre-temps ?"};
+  }
+  function n2(){
+    var t=st.done.tuteur&&st.done.tuteur.v==="a",c=st.done.cv&&st.done.cv.v==="a";
+    if(t&&c)return{g:{s:-18,p:-4},
+      punch:"LES CONVERSATIONS DU TUTEUR FUITENT. LA PRESSE FAIT LE LIEN AVEC LES CV.",
+      txt:"Quatre-vingt mille échanges d'étudiants en ligne, dont des messages écrits la nuit. Deux décisions prises à dix minutes d'intervalle forment désormais une seule histoire : ce laboratoire collecte, et ce laboratoire trie.",
+      why:"L'effondrement vient du cumul, pas d'une décision isolée. C'est le mécanisme réel des crises de réputation : deux choix défendables séparément deviennent indéfendables ensemble.",
+      q:"À quel moment précis auriez-vous pu casser cet enchaînement ?"};
+    if(t)return{g:{s:-15},
+      punch:"LES CONVERSATIONS DU TUTEUR IA SE RETROUVENT EN LIGNE.",
+      txt:"Quatre-vingt mille échanges exposés, dont des situations personnelles confiées à un système que les étudiants croyaient privé.",
+      why:"SOCIETY plonge parce que la donnée que vous n'avez pas collectée est la seule qui ne fuitera jamais, et vous aviez choisi de la conserver cinq ans.",
+      q:"Une donnée gardée pour améliorer le service : quel bénéfice réel, quel risque réel ?"};
+    if(c)return{g:{s:-12,p:-3},
+      punch:"RECOURS COLLECTIF DES CANDIDATS ÉCARTÉS PAR VOTRE IA.",
+      txt:"Ils demandent les critères de décision. Vous ne pouvez pas les produire : personne ne les a documentés.",
+      why:"L'absence de traçabilité coûte plus cher que le biais lui-même, parce qu'elle vous empêche de prouver votre bonne foi même quand vous l'avez.",
+      q:"Qui, dans votre organisation, aurait dû exiger cette documentation, et pourquoi ne l'a-t-il pas fait ?"};
+    return{g:{p:6,e:2},
+      punch:"DEUX CONCURRENTS ENCAISSENT UN SCANDALE CETTE SEMAINE. PAS VOUS.",
+      txt:"Fuite de données d'un côté, discrimination algorithmique de l'autre. Vos décisions conditionnelles ne rapportaient rien sur le moment.",
+      why:"Le gain arrive maintenant, en parts de marché et en confiance. C'est le problème structurel de la prévention : son retour sur investissement est un événement qui n'a pas lieu.",
+      q:"Comment défend-on en interne un budget dont le résultat est un scandale évité ?"};
+  }
+
+  /* ---------- ROUND 3 ---------- */
+  R.laws=function(s){
+    var r=[0,1,2].map(function(i){
+      return '<div class="lawrow"><span class="n">LOI 0'+(i+1)+'</span><input type="text" id="law'+i+
+        '" data-act="law" data-i="'+i+'" value="'+e(st.laws[i])+'" placeholder="saisir la loi votée…" autocomplete="off"></div>';
+    }).join("");
+    return '<div class="kick">&gt; '+e(s.k)+'</div>'+
+      '<h1>TROIS RÈGLES. PAS UNE DE PLUS.</h1>'+
+      '<div class="laws">'+r+"</div>"+
+      '<p class="q" style="margin-top:38px">Pour chaque loi : qui contrôle, comment on prouve l\'infraction, et que se passe-t-il si quelqu\'un ne la respecte pas ?</p>';
+  };
+  function lawList(){
+    var h='<ul class="lawlist">';
+    for(var i=0;i<3;i++){var t=st.laws[i].trim();
+      h+="<li><b>0"+(i+1)+"</b>"+(t?"<span>"+e(t)+"</span>":'<span class="emp">non renseignée</span>')+"</li>";}
+    return h+"</ul>";
+  }
+
+  /* ---------- ROUND 3 : chaînes d'escalade ---------- */
+  var VL={ok:"OK",no:"PAS OK",dep:"ÇA DÉPEND"};
+  R.chain=function(s){
+    var c=CHAINS[s.n];
+    st.chain[c.id]=st.chain[c.id]||[];
+    var v=st.chain[c.id],cut=v.length,full=cut>=c.rungs.length;
+    var rows="";
+    for(var i=0;i<c.rungs.length;i++){
+      if(i>cut)break;
+      var done=i<cut;
+      /* échelle terminée : tout se replie en une ligne par marche,
+         pour que la phrase choc reste visible sans défiler */
+      if(full){
+        rows+='<li class="rung past"><div class="top"><span class="no">0'+(i+1)+
+          '</span><span class="tx">'+e(c.rungs[i])+'</span><span class="vd">'+VL[v[i]]+"</span></div></li>";
+        continue;
+      }
+      rows+='<li class="rung'+(done?" past":"")+'"><div class="top"><span class="no">0'+(i+1)+
+        '</span><span class="tx">'+e(c.rungs[i])+"</span></div>"+
+        (done
+          ? '<div class="verdict">&gt; '+VL[v[i]]+"</div>"
+          : '<div class="vb">'+
+              '<button class="sbtn" data-act="rung" data-c="'+s.n+'" data-v="ok">OK</button>'+
+              '<button class="sbtn" data-act="rung" data-c="'+s.n+'" data-v="no">PAS OK</button>'+
+              '<button class="sbtn" data-act="rung" data-c="'+s.n+'" data-v="dep">ÇA DÉPEND</button>'+
+            "</div>")+
+        "</li>";
+    }
+    var rev="";
+    if(full){
+      if(!st.done["ch"+c.id]){st.done["ch"+c.id]=true;
+        st.log.push({ph:"R3",nm:"Ligne — "+c.name,ch:lineOf(v),g:{s:5}});
+        setTimeout(function(){delta({s:5});},420);}
+      rev=revBlock(c.punch,c.txt,c.src,{s:5},
+        "SOCIETY monte de 5 parce que la classe a nommé sa ligne au lieu de la laisser implicite. Une limite que personne n'a formulée n'est pas une limite : c'est ce qui reste quand on n'a pas encore été tenté.",c.q);
+    }
+    return '<div class="kick">&gt; ROUND 3 · ÉCHELLE 0'+(s.n+1)+' / 04 — <b>'+e(c.name)+"</b></div>"+
+      (cut===0?'<p class="txt">'+e(c.intro)+"</p>":"")+
+      '<ul class="rungs'+(full?" tight":"")+'">'+rows+"</ul>"+rev;
+  };
+  function lineOf(v){
+    for(var i=0;i<v.length;i++)if(v[i]==="no")return "ligne à l'étape "+(i+1);
+    for(var j=0;j<v.length;j++)if(v[j]==="dep")return "hésitation à l'étape "+(j+1);
+    return "aucune ligne posée";
+  }
+
+  /* ---------- ROUND 4 : épreuves ---------- */
+  R.ep=function(s){
+    var ep=EPREUVES[s.n],v=st.sv[s.n];
+    var rev="";
+    if(v){
+      var d=v==="ok"?{s:4}:{s:-3,p:2};
+      rev=revBlock(v==="ok"?"VOTRE LOI TIENT SUR CE CAS.":"TROU DANS LA LOI.","","",d,
+        v==="ok"
+          ?"SOCIETY monte : une règle qui couvre un cas qu'elle n'avait pas anticipé est une bonne règle. Vérifiez quand même qui l'applique, parce qu'une loi qui couvre tout sans contrôleur ne couvre rien."
+          :"SOCIETY baisse parce que la loi ne protège personne ici, et PROGRESS monte de 2 parce que l'avoir vu maintenant vaut infiniment mieux que de l'avoir voté sans le voir. C'est le travail réel du législateur : chercher les cas que son texte ne couvre pas.",
+        ep.q);
+    }
+    return '<div class="kick">&gt; ROUND 4 · ÉPREUVE 0'+(s.n+1)+' / 08 — <b>'+e(ep.n)+"</b></div>"+
+      '<p class="sit">'+e(ep.sit)+"</p>"+
+      '<ul class="mini">'+lawMini()+"</ul>"+
+      '<div class="vb'+(v?" set":"")+'">'+
+        '<button class="sbtn'+(v==="ok"?" on":"")+'" data-act="sv" data-i="'+s.n+'" data-v="ok">COUVERTE PAR NOS LOIS</button>'+
+        '<button class="sbtn'+(v==="hole"?" on":"")+'" data-act="sv" data-i="'+s.n+'" data-v="hole">TROU DANS LA LOI</button>'+
+      "</div>"+rev;
+  };
+  function lawMini(){
+    var h="";
+    for(var i=0;i<3;i++){var t=st.laws[i].trim();
+      h+="<li><b>0"+(i+1)+"</b>"+(t?"<span>"+e(t)+"</span>":'<span class="emp">non renseignée</span>')+"</li>";}
+    return h;
+  }
+
+  R.aiact=function(s){
+    var l=AIACT.map(function(a){return "<li><h3>"+e(a[0])+"</h3><p>"+e(a[1])+"</p></li>";}).join("");
+    return '<div class="kick">&gt; '+e(s.k)+'</div>'+
+      '<h1>COMPAREZ AVEC L\'AI ACT EUROPÉEN.</h1>'+
+      '<ul class="plain">'+l+"</ul>"+
+      '<div style="margin-top:30px">'+lawList()+"</div>"+
+      '<p class="src" style="margin-top:22px">AI Act : entré en vigueur en 2024, application échelonnée jusqu\'en 2027. Le calendrier et certaines obligations continuent d\'évoluer.</p>';
+  };
+
+  R.bilan=function(s){
+    var g=st.g,mn=Math.min(g.p,g.e,g.s);
+    var weak=g.p===mn?"PROGRESS":(g.e===mn?"PLANET":"SOCIETY");
+    var v;
+    if(mn>=55)v=["","LABORATOIRE VIABLE","Vous avez développé l'IA sans sacrifier une dimension. C'est le résultat le plus difficile à obtenir et le seul qui tienne sur dix ans."];
+    else if(mn>=35)v=["","SOUS TENSION","Le laboratoire fonctionne, mais une dimension paie pour les autres. C'est la situation de la plupart des entreprises réelles aujourd'hui."];
+    else if(mn>=15)v=["bad","ALERTE","Une jauge est en zone rouge. Dans le monde réel : enquête, régulateur, ou boycott. Le progrès accumulé ne compense pas."];
+    else v=["bad","EFFONDREMENT","Vous avez maximisé une dimension jusqu'à casser les autres. Techniquement, vous avez gagné."];
+    var rows=st.log.map(function(l){
+      return '<tr><td class="m">'+e(l.ph)+"</td><td>"+e(l.nm)+"</td><td>"+e(l.ch)+'</td><td class="m">'+
+        dl(l.g).replace('class="dl"','class="dl" style="gap:12px;margin:0;font-size:18px"')+"</td></tr>";
+    }).join("")||'<tr><td colspan="4">Aucune décision enregistrée.</td></tr>';
+    return '<div class="kick">&gt; '+e(s.k)+' · SCORE = JAUGE LA PLUS BASSE ('+weak+')</div>'+
+      '<p class="big '+v[0]+'">'+mn+"</p>"+
+      '<p class="vn '+v[0]+'">'+v[1]+"</p>"+
+      '<p class="txt">'+e(v[2])+"</p>"+
+      '<div class="fin"><span>PROGRESS '+g.p+"</span><span>PLANET "+g.e+"</span><span>SOCIETY "+g.s+"</span></div>"+
+      '<div class="kick" style="margin:44px 0 12px">&gt; THE CLASS AI ACT</div>'+lawList()+
+      '<div class="kick" style="margin:44px 0 12px">&gt; JOURNAL DES DÉCISIONS</div>'+
+      '<div class="scr"><table><thead><tr><th>PHASE</th><th>CAS</th><th>CHOIX</th><th>IMPACT</th></tr></thead><tbody>'+rows+"</tbody></table></div>"+
+      '<p class="q">Regardez la ligne qui vous a coûté le plus cher. Au moment du vote, quelqu\'un dans la salle l\'avait-il vu venir ? Pourquoi ne l\'a-t-on pas écouté ?</p>'+
+      '<p class="src" style="margin-top:32px">SOURCES CITÉES : University of Washington, AIES 2024 · Stanford Digital Economy Lab 2026 · AIE, Energy and AI 2025 · Central Statistics Office Ireland 2026 · rapport environnemental de Google via la presse belge 2023 · refus de pompage dans la Sambre, presse belge août 2026 · Obermeyer et al., Science 2019 · Time, janvier 2023 · Liang et al., Patterns 2023 · Mata v. Avianca 2023 · Moffatt v. Air Canada 2024 · Deeptrace 2019 · Amnesty International 2016 · Nature Computational Science 2024 · International AI Safety Report 2026.</p>';
+  };
+
+  /* ---------- RÉCAPITULATIF IMPRIMABLE ---------- */
+  function pLaws(){
+    var h="<ol>";
+    for(var i=0;i<3;i++)h+="<li>"+(st.laws[i].trim()?e(st.laws[i]):"<i>non renseignée</i>")+"</li>";
+    return h+"</ol>";
+  }
+  function pDeltas(d){
+    var o=[];["p","e","s"].forEach(function(k){var v=(d||{})[k]||0;
+      if(v)o.push(NM[k]+" "+(v>0?"+":"−")+Math.abs(v));});
+    return o.length?o.join(" · "):"aucun impact";
+  }
+  function fiche(c,i){
+    return '<div class="fiche"><p class="sm">AI LAB 2035 — ROUND 2 — DOSSIER '+(i+1)+" / "+e(c.tag)+"</p>"+
+      "<h1>"+e(c.name)+"</h1><p><b>"+e(c.sit)+"</b></p>"+
+      "<h3>Vos trois options</h3><ul>"+
+      c.opts.map(function(o){return "<li><b>"+e(o.t)+"</b> — "+e(o.d)+"</li>";}).join("")+"</ul>"+
+      "<h3>À préparer en dix minutes</h3><ol>"+
+      "<li>Quelle est l'opportunité réelle, chiffrée si possible ?</li>"+
+      "<li>Qu'est-ce qui peut très mal tourner, et pour qui exactement ?</li>"+
+      "<li>Quelle option défendez-vous devant la classe, et à quelle condition ?</li></ol>"+
+      '<p class="sm">Ne montrez pas cette fiche aux autres équipes.</p></div>';
+  }
+  function buildPrint(mode){
+    var d=new Date().toLocaleDateString("fr-BE"),h="";
+    if(mode==="fiches"){
+      if(!st.draw)drawPool(st.nteam);
+      h=st.draw.map(fiche).join("");
+      document.getElementById("pdoc").innerHTML=h;
+      return;
+    }
+    var g=st.g,mn=Math.min(g.p,g.e,g.s);
+    h+="<h1>AI Lab 2035 — récapitulatif de session</h1>"+
+       '<p class="meta">'+d+" · score final "+mn+" (jauge la plus basse) · PROGRESS "+g.p+" · PLANET "+g.e+" · SOCIETY "+g.s+"</p>";
+
+    h+="<h2>The Class AI Act</h2>"+pLaws();
+
+    h+="<h2>Round 1 — décisions</h2>";
+    STEPS.filter(function(s){return s.t==="dec";}).forEach(function(s){
+      var v=st.done[s.id],o=v?s.opts[v.k]:null;
+      h+='<div class="box"><h3>'+e(s.k.replace(/^ROUND 1 · /,""))+"</h3><p>"+e(s.sit)+"</p>"+
+        (o?'<p class="pick">Choix de la classe : '+e(o.t)+" — "+pDeltas(o.g)+"</p>"+
+            "<p><b>"+e(o.punch)+"</b></p><p>"+e(o.txt)+"</p>"+
+            (o.src?'<p class="sm">'+e(o.src)+"</p>":"")+
+            "<p><i>Pourquoi ces points :</i> "+e(o.why)+"</p>"+
+            "<p><i>Question ouverte :</i> "+e(o.q)+"</p>"
+          :"<p><i>Cas non joué.</i></p>")+"</div>";
+    });
+
+    h+="<h2>Round 1 — faits vérifiables</h2>";
+    STEPS.filter(function(s){return s.t==="quiz";}).forEach(function(s){
+      var v=st.done[s.id],good=s.opts.filter(function(o){return o.right;})[0];
+      h+='<div class="box"><h3>'+e(s.k.replace(/^ROUND 1 · /,""))+"</h3><p>"+e(s.sit)+"</p>"+
+        '<p class="pick">Réponse de la classe : '+(v?e(s.opts[v.k].t)+(v.ok?" (juste)":" (à côté)"):"non joué")+
+        " · bonne réponse : "+e(good?good.t:"—")+"</p>"+
+        "<p><b>"+e(s.punch)+"</b></p><p>"+e(s.txt)+"</p>"+
+        '<p class="sm">'+e(s.src)+"</p>"+
+        "<p><i>Question ouverte :</i> "+e(s.q)+"</p></div>";
+    });
+
+    h+="<h2>Round 2 — dossiers en équipes</h2>";
+    if(st.draw&&st.draw.length){
+      st.draw.forEach(function(c,i){
+        var v=(st.done.pool||{})[c.id],o=v?c.opts[v.k]:null;
+        h+='<div class="box"><h3>Équipe '+(i+1)+" — "+e(c.name)+" ("+e(c.tag)+")</h3><p>"+e(c.sit)+"</p>"+
+          "<p><i>Options :</i> "+c.opts.map(function(x){return e(x.t);}).join(" / ")+"</p>"+
+          (o?'<p class="pick">Choix de la classe : '+e(o.t)+" — "+pDeltas(o.g)+"</p>"+
+              "<p><i>Pourquoi ces points :</i> "+e(o.why)+"</p>":"<p><i>Non joué.</i></p>")+
+          "<p><b>"+e(c.punch)+"</b></p><p>"+e(c.txt)+"</p>"+
+          (c.src?'<p class="sm">'+e(c.src)+"</p>":"")+
+          "<p><i>Question ouverte :</i> "+e(c.q)+"</p></div>";
+      });
+    } else h+="<p><i>Aucun dossier tiré.</i></p>";
+
+    h+="<h2>Round 3 — où est la ligne ?</h2>";
+    CHAINS.forEach(function(c){
+      var v=st.chain[c.id]||[];
+      h+='<div class="box"><h3>'+e(c.name)+" — "+e(v.length?lineOf(v):"non jouée")+"</h3><ol>"+
+        c.rungs.map(function(r,i){
+          return "<li>"+e(r)+(v[i]?" <b>["+VL[v[i]]+"]</b>":"")+"</li>";}).join("")+"</ol>"+
+        "<p><b>"+e(c.punch)+"</b></p><p>"+e(c.txt)+"</p>"+
+        (c.src?'<p class="sm">'+e(c.src)+"</p>":"")+
+        "<p><i>Question ouverte :</i> "+e(c.q)+"</p></div>";
+    });
+
+    h+="<h2>Round 4 — les huit épreuves</h2>";
+    EPREUVES.forEach(function(ep,i){
+      var v=st.sv[i];
+      h+='<div class="box"><h3>'+e(ep.n)+"</h3><p>"+e(ep.sit)+"</p>"+
+        '<p class="pick">Verdict : '+(v?(v==="ok"?"couverte par nos lois":"trou dans la loi"):"non jouée")+"</p>"+
+        "<p><i>Relance :</i> "+e(ep.q)+"</p></div>";
+    });
+
+    h+="<h2>Ce que l'AI Act européen prévoit déjà</h2>";
+    AIACT.forEach(function(a){h+="<h3>"+e(a[0])+"</h3><p>"+e(a[1])+"</p>";});
+
+    h+="<h2>Journal des décisions</h2><table><tr><th>Phase</th><th>Cas</th><th>Choix</th><th>Impact</th></tr>";
+    st.log.forEach(function(l){h+="<tr><td>"+e(l.ph)+"</td><td>"+e(l.nm)+"</td><td>"+e(l.ch)+"</td><td>"+pDeltas(l.g)+"</td></tr>";});
+    h+="</table>";
+
+    h+="<h2>Sources</h2><p class=\"sm\">University of Washington, AIES 2024 · Stanford Digital Economy Lab 2026 · AIE, Energy and AI 2025 · Central Statistics Office Ireland 2026 · rapport environnemental de Google via la presse belge 2023 · refus de pompage dans la Sambre, presse belge août 2026 · Obermeyer et al., Science 2019 · Time janvier 2023 · Liang et al., Patterns 2023 · Mata v. Avianca 2023 · Moffatt v. Air Canada 2024 · Deeptrace 2019 · Amnesty International 2016 · Nature Computational Science 2024 · International AI Safety Report 2026 · AI Act européen.</p>";
+
+    document.getElementById("pdoc").innerHTML=h;
+  }
+
+  R.recap=function(s){
+    return '<div class="kick">&gt; '+e(s.k)+"</div>"+
+      "<h1>TOUT EST IMPRIMABLE.</h1>"+
+      '<p class="txt">Le récapitulatif contient les quatre rounds : chaque cas, l\'option choisie par la classe, les faits avec leurs sources, les lignes posées au round 3, les verdicts des huit épreuves, vos trois lois et le journal complet des décisions.</p>'+
+      '<div class="vote" style="max-width:520px">'+
+      '<button class="opt" data-act="print" data-m="all"><span class="key">[P]</span><span class="t">IMPRIMER LE RÉCAPITULATIF</span></button>'+
+      '<button class="opt" data-act="print" data-m="fiches"><span class="key">[F]</span><span class="t">IMPRIMER LES FICHES ÉQUIPES</span></button>'+
+      "</div>"+
+      '<p class="src" style="margin-top:26px">Le document s\'imprime en noir sur blanc, une fiche par page pour les équipes. Si la fenêtre d\'impression ne s\'ouvre pas depuis le panneau de conversation, ouvrez la page dans son propre onglet et utilisez Ctrl+P.</p>';
+  };
+
+  R.end=function(){
+    return '<div class="end"><h2>AI IS NOT JUST A TECHNOLOGY.</h2>'+
+      "<p>Every AI decision is also a choice about people, power and resources.</p>"+
+      '<p class="src" style="margin-top:40px">&gt; FIN DE SESSION<span class="cur">_</span></p></div>';
+  };
+
+  var TIMERS={dec:60,quiz:60,slot:150,draw:600,chain:240,laws:300,ep:120};
+  function render(){
+    var s=STEPS[st.i];
+    setT(TIMERS[s.t]||0);
+    $pv.disabled=st.i===0;
+    $nx.textContent=st.i===STEPS.length-1?"FIN":"SUIVANT >>";
+    $pos.textContent="> ÉTAPE "+(st.i+1)+" / "+STEPS.length;
+    $s.innerHTML=R[s.t](s);
+    window.scrollTo(0,0);
+  }
+
+  /* ======================================================
+     ÉVÉNEMENTS
+     ====================================================== */
+
+  function vote(k){
+    var s=STEPS[st.i];
+    if(s.t==="dec"){
+      if(st.done[s.id]||!s.opts[k])return;
+      var o=s.opts[k];
+      st.done[s.id]={k:k,v:o.v};
+      if(o.flag)st.flags[o.flag]=true;
+      st.log.push({ph:"R1",nm:s.k.split("—")[1]?s.k.split("—")[1].trim():s.k,ch:o.t,g:o.g});
+      render();delta(o.g);
+    }
+    else if(s.t==="quiz"){
+      if(st.done[s.id]||!s.opts[k])return;
+      var ok=!!s.opts[k].right;
+      st.done[s.id]={k:k,ok:ok};
+      st.log.push({ph:"R1 FAIT",nm:s.k.split("—")[1].trim(),ch:ok?"juste":"à côté",g:ok?{e:6}:{}});
+      render();if(ok)delta({e:6});
+    }
+    else if(s.t==="slot"){
+      var c=st.draw&&st.draw[s.n];if(!c)return;
+      st.done.pool=st.done.pool||{};
+      if(st.done.pool[c.id]||!c.opts[k])return;
+      var oo=c.opts[k];
+      st.done.pool[c.id]={k:k,v:oo.v};
+      st.log.push({ph:"R2",nm:c.name,ch:oo.t,g:oo.g});
+      render();delta(oo.g);
+    }
+    else if(s.t==="chain"){
+      var ch=CHAINS[s.n],vv=["ok","no","dep"][k];
+      st.chain[ch.id]=st.chain[ch.id]||[];
+      if(!vv||st.chain[ch.id].length>=ch.rungs.length)return;
+      st.chain[ch.id].push(vv);render();
+    }
+    else if(s.t==="ep"){
+      if(k>1||st.sv[s.n])return;
+      var vd=k===0?"ok":"hole",dd=k===0?{s:4}:{s:-3,p:2};
+      st.sv[s.n]=vd;
+      st.log.push({ph:"R4",nm:"Épreuve — "+EPREUVES[s.n].n,ch:k===0?"couverte":"trou",g:dd});
+      render();delta(dd);
+    }
+  }
+
+  $s.addEventListener("click",function(ev){
+    var b=ev.target.closest("[data-act]");if(!b)return;
+    var a=b.getAttribute("data-act");
+    if(a==="dec"||a==="quiz"||a==="pool"){vote(+b.getAttribute("data-k"));return;}
+    if(a==="draw"){st.nteam=+b.getAttribute("data-n");drawPool(st.nteam);render();return;}
+    if(a==="print"){buildPrint(b.getAttribute("data-m"));setTimeout(function(){try{window.print();}catch(err){}},80);return;}
+
+    if(a==="disc"){
+      var t=b.getAttribute("data-t"),box=$s.querySelector('[data-box="'+t+'"]');
+      if(box){box.hidden=!box.hidden;b.classList.toggle("on",!box.hidden);}
+      return;
+    }
+
+    if(a==="rung"){
+      var ci=+b.getAttribute("data-c"),c=CHAINS[ci];
+      st.chain[c.id]=st.chain[c.id]||[];
+      if(st.chain[c.id].length>=c.rungs.length)return;
+      st.chain[c.id].push(b.getAttribute("data-v"));
+      render();return;
+    }
+
+    if(a==="sv"){
+      var i=+b.getAttribute("data-i"),v=b.getAttribute("data-v");
+      if(st.sv[i])return;
+      st.sv[i]=v;
+      var d=v==="ok"?{s:4}:{s:-3,p:2};
+      st.log.push({ph:"R4",nm:"Épreuve — "+EPREUVES[i].n,ch:v==="ok"?"couverte":"trou",g:d});
+      render();delta(d);
+    }
+  });
+
+  $s.addEventListener("input",function(ev){
+    if(ev.target.getAttribute("data-act")==="law")st.laws[+ev.target.getAttribute("data-i")]=ev.target.value;
+  });
+
+  $nx.addEventListener("click",function(){if(st.i<STEPS.length-1){st.i++;render();}});
+  $pv.addEventListener("click",function(){if(st.i>0){st.i--;render();}});
+  $tm.addEventListener("click",togT);
+  $tm.addEventListener("keydown",function(ev){if(ev.key==="Enter")togT();});
+  $rs.addEventListener("click",function(){
+    if(!confirm("Nouvelle partie ? Décisions, lois et tirage seront effacés."))return;
+    st={i:0,g:{p:60,e:60,s:60},log:[],laws:["","",""],done:{},flags:{},draw:null,sv:{},chain:{},nteam:st.nteam};
+    document.getElementById("sess").textContent="02";
+    paintG();render();
+  });
+
+  document.addEventListener("keydown",function(ev){
+    if(ev.target.tagName==="INPUT")return;
+    var k=ev.key.toLowerCase();
+    if(ev.key==="ArrowRight"){ev.preventDefault();$nx.click();return;}
+    if(ev.key==="ArrowLeft"){ev.preventDefault();$pv.click();return;}
+    if(ev.key===" "){ev.preventDefault();togT();return;}
+    if(k==="a"){vote(0);return;}
+    if(k==="b"){vote(1);return;}
+    if(k==="c"){vote(2);return;}
+    if(k==="p"){buildPrint("all");setTimeout(function(){try{window.print();}catch(err){}},80);return;}
+    if(k==="f"){buildPrint("fiches");setTimeout(function(){try{window.print();}catch(err){}},80);return;}
+  });
+
+  buildG();paintG();render();
+})();
+</script>
