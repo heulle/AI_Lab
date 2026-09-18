@@ -1,4 +1,4 @@
-<title>AI Lab 2035</title>
+<title>AI Lab - Prompt Engineering</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Press+Start+2P&display=swap">
@@ -146,6 +146,9 @@
   .plain li{padding:16px 0;border-bottom:1px solid var(--grn4)}
   .plain p{margin:0;font-size:18px;line-height:1.5;color:var(--wht)}
 
+  .prep{margin:0 0 8px;padding:0 0 0 30px;max-width:48ch}
+  .prep li{font-size:clamp(19px,1.8vw,23px);line-height:1.5;margin-bottom:9px;color:var(--wht)}
+  .prep li::marker{color:var(--amb)}
   .teams{list-style:none;padding:0;margin:26px 0 0;max-width:820px}
   .teams li{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--grn4)}
   .teams .eq{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amb);min-width:128px}
@@ -1290,7 +1293,10 @@
     }).join("");
     return '<div class="kick">&gt; '+e(s.k)+' · TRAVAIL EN ÉQUIPES</div>'+
       '<h1>CHAQUE ÉQUIPE REÇOIT UN DOSSIER.</h1>'+
-      '<p class="txt">Dix minutes en équipe sur votre dossier : quelle est l\'opportunité, qu\'est-ce qui peut très mal tourner, que décidez-vous. Ensuite, mise en commun dossier par dossier : l\'équipe présente sa position, la classe vote, le laboratoire en assume les conséquences.</p>'+
+      '<p class="txt">Dix minutes en équipe. Trois questions, les mêmes pour tous les dossiers.</p>'+
+      '<ol class="prep"><li>À qui cela profite, et qui en paie le prix ?</li>'+
+      '<li>Que se passe-t-il si on ne change rien ? Nommez la personne qui n\'a aucun moyen de se protéger.</li>'+
+      '<li>Quelle option défendez-vous, à quelle condition, et qui doit l\'appliquer ?</li></ol>'+
       '<ul class="teams">'+l+"</ul>"+
       '<div class="vote" style="margin-top:26px;max-width:420px">'+
         '<button class="opt" data-act="draw" data-n="4"><span class="key">[4]</span><span class="t">TIRER 4 DOSSIERS</span></button>'+
@@ -1553,9 +1559,9 @@
       "<h3>Vos trois options</h3><ul>"+
       c.opts.map(function(o){return "<li><b>"+e(o.t)+"</b> — "+e(o.d)+"</li>";}).join("")+"</ul>"+
       "<h3>À préparer en dix minutes</h3><ol>"+
-      "<li>Quelle est l'opportunité réelle, chiffrée si possible ?</li>"+
-      "<li>Qu'est-ce qui peut très mal tourner, et pour qui exactement ?</li>"+
-      "<li>Quelle option défendez-vous devant la classe, et à quelle condition ?</li></ol>"+
+      "<li>À qui cela profite, et qui en paie le prix ?</li>"+
+      "<li>Que se passe-t-il si on ne change rien ? Nommez la personne qui n'a aucun moyen de se protéger.</li>"+
+      "<li>Quelle option défendez-vous, à quelle condition, et qui doit l'appliquer ?</li></ol>"+
       '<p class="sm">Ne montrez pas cette fiche aux autres équipes.</p></div>';
   }
   function buildPrint(mode){
