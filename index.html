@@ -246,6 +246,7 @@
   .panel{padding:4px 10px;font-size:14px;color:var(--ink2);
     box-shadow:inset 1px 1px 0 var(--shad),inset -1px -1px 0 var(--lite)}
   .sbar .grow{flex:1;box-shadow:inset 1px 1px 0 var(--shad),inset -1px -1px 0 var(--lite)}
+  .cr{color:var(--gray);font-size:13px;white-space:nowrap}
   .tm{cursor:pointer;font-variant-numeric:tabular-nums;min-width:72px;text-align:center;user-select:none}
   .tm.run{font-weight:bold;color:var(--nav)}
   .tm.out{font-weight:bold;color:var(--maro);animation:bl .85s steps(1) infinite}
@@ -271,7 +272,7 @@
     .dico{display:none}
     .teams li{flex-wrap:wrap}
     .teams .tg{margin-left:0}
-    .panel.hideM{display:none}
+    .panel.hideM,.panel.cr{display:none}
   }
 
   /* ---------- IMPRESSION ---------- */
@@ -346,6 +347,7 @@
     <span class="panel" id="pos"></span>
     <span class="panel hideM" id="stat">Statut : calme</span>
     <span class="grow"></span>
+    <span class="panel cr">&copy; Équipe Prompt Engineering 26-27</span>
     <span class="panel tm" id="tm" role="button" tabindex="0" title="Chrono — barre d'espace">--:--</span>
   </div>
 </div>
@@ -1656,7 +1658,7 @@
       "<li>À qui cela profite, et qui en paie le prix ?</li>"+
       "<li>Que se passe-t-il si on ne change rien ? Nommez la personne qui n'a aucun moyen de se protéger.</li>"+
       "<li>Quelle option défendez-vous, à quelle condition, et qui doit l'appliquer ?</li></ol>"+
-      '<p class="sm">Ne montrez pas cette fiche aux autres équipes.</p></div>';
+      '<p class="sm">Ne montrez pas cette fiche aux autres équipes. &nbsp;·&nbsp; © Équipe Prompt Engineering 26-27</p></div>';
   }
   function buildPrint(mode){
     var d=new Date().toLocaleDateString("fr-BE"),h="";
@@ -1668,7 +1670,8 @@
     }
     var g=st.g,mn=Math.min(g.p,g.e,g.s);
     h+="<h1>AI Lab 2035 — récapitulatif de session</h1>"+
-       '<p class="meta">'+d+" · score final "+mn+" (jauge la plus basse) · PROGRESS "+g.p+" · PLANET "+g.e+" · SOCIETY "+g.s+"</p>";
+       '<p class="meta">'+d+" · score final "+mn+" (jauge la plus basse) · PROGRESS "+g.p+" · PLANET "+g.e+" · SOCIETY "+g.s+
+       "<br>© Équipe Prompt Engineering 26-27</p>";
 
     h+="<h2>The Class AI Act</h2>"+pLaws();
 
