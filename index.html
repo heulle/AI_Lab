@@ -1,33 +1,34 @@
 <title>AI Lab 2035</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Press+Start+2P&display=swap">
 <style>
   :root{
     --bg:#000000;
-    --grn:#39FF6A;      /* phosphore vif */
-    --grn2:#22C24C;     /* phosphore moyen */
-    --grn3:#0F6B2C;     /* phosphore faible : bordures */
-    --grn4:#073616;     /* presque éteint */
-    --amb:#FFB000;      /* ambre : alertes et malus */
-    --wht:#D9FFE4;      /* surbrillance */
+    --grn:#45FF77;      /* phosphore vif : titres et accents */
+    --grn2:#7BEF9D;     /* phosphore moyen : texte secondaire */
+    --grn3:#1F9445;     /* bordures visibles au projecteur */
+    --grn4:#0A3D1A;     /* fond de sélection */
+    --amb:#FFC233;      /* ambre : alertes et malus */
+    --wht:#F2FFF6;      /* texte courant : quasi blanc, contraste maximal */
     color-scheme:dark;
   }
   html,body{height:100%;background:var(--bg)}
   body{
     color:var(--wht);
-    font-family:VT323,"IBM Plex Mono",ui-monospace,monospace;
-    font-size:28px;line-height:1.45;
+    font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-weight:500;font-size:22px;line-height:1.5;
     background:var(--bg);
   }
   *{box-sizing:border-box}
   button{font:inherit;color:inherit;background:none}
 
-  /* scanlines discrètes : lisibilité d'abord */
-  body::after{
+  /* scanlines : décoratives, désactivées par défaut pour la projection */
+  body.crt::after{
     content:"";position:fixed;inset:0;pointer-events:none;z-index:60;
-    background:repeating-linear-gradient(0deg,rgba(0,0,0,.13) 0 1px,rgba(0,0,0,0) 1px 4px);
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,rgba(0,0,0,0) 1px 4px);
   }
+  body.crt{text-shadow:0 0 9px rgba(69,255,119,.3)}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
   .app{min-height:100%;display:flex;flex-direction:column;position:relative;z-index:1}
@@ -43,12 +44,12 @@
   .gz{display:flex;flex-direction:column;gap:1px}
   .g{display:flex;align-items:center;gap:12px;position:relative;white-space:nowrap;align-self:flex-start;padding-right:74px}
   .g .nm{font-family:"Press Start 2P",monospace;font-size:8.5px;width:86px;color:var(--grn2);text-shadow:none;flex:none}
-  .g .bar{font-size:21px;letter-spacing:-.04em;color:var(--grn);overflow:hidden}
-  .g .val{font-size:21px;width:3ch;text-align:right;color:var(--wht)}
+  .g .bar{font-size:17px;letter-spacing:-.06em;color:var(--grn);overflow:hidden}
+  .g .val{font-weight:700;font-size:18px;width:3ch;text-align:right;color:var(--wht)}
   .g.low .bar,.g.low .val{color:var(--amb);text-shadow:0 0 8px rgba(255,176,0,.5)}
   .g.low .nm{color:var(--amb)}
   .g.low .nm:after{content:" !"}
-  .chip{position:absolute;right:0;font-size:22px;opacity:0;pointer-events:none;color:var(--wht)}
+  .chip{position:absolute;right:0;font-weight:700;font-size:18px;opacity:0;pointer-events:none;color:var(--wht)}
   .chip.dn{color:var(--amb)}
   .chip.go{animation:fl 1.7s steps(9) forwards}
   @keyframes fl{0%{opacity:0}12%{opacity:1}75%{opacity:1}100%{opacity:0}}
@@ -63,15 +64,15 @@
   .kick b{color:var(--amb);font-weight:400}
 
   h1,h2{font-family:"Press Start 2P",monospace;font-weight:400;color:var(--grn)}
-  h1{font-size:clamp(18px,2.9vw,31px);line-height:1.5;margin:0 0 32px;max-width:24ch}
-  h2{font-size:clamp(15px,2.1vw,21px);line-height:1.65;margin:0 0 22px;max-width:32ch}
+  h1{font-size:clamp(17px,2.6vw,28px);line-height:1.55;margin:0 0 32px;max-width:26ch}
+  h2{font-size:clamp(14px,1.9vw,19px);line-height:1.7;margin:0 0 22px;max-width:34ch}
   h3{font-family:"Press Start 2P",monospace;font-weight:400;font-size:11px;line-height:1.7;margin:0 0 9px;color:var(--grn)}
 
-  .sit{font-size:clamp(27px,3.1vw,38px);line-height:1.36;margin:0 0 38px;max-width:40ch;color:var(--wht)}
-  .sit.sm{font-size:clamp(21px,1.9vw,24px);line-height:1.4;color:var(--grn2);max-width:56ch;margin:0 0 18px}
+  .sit{font-weight:700;font-size:clamp(21px,2.4vw,30px);line-height:1.4;margin:0 0 38px;max-width:38ch;color:var(--wht)}
+  .sit.sm{font-weight:500;font-size:clamp(16px,1.4vw,19px);line-height:1.45;color:var(--grn2);max-width:56ch;margin:0 0 18px}
   .choice{font-family:"Press Start 2P",monospace;font-size:11px;line-height:1.7;color:var(--amb);margin:0 0 32px}
-  .txt{font-size:clamp(25px,2.4vw,30px);line-height:1.46;margin:0 0 18px;max-width:48ch;color:var(--wht)}
-  .src{font-size:21px;line-height:1.45;color:var(--grn2);max-width:52ch;margin:0}
+  .txt{font-size:clamp(19px,1.8vw,23px);line-height:1.5;margin:0 0 18px;max-width:46ch;color:var(--wht)}
+  .src{font-size:15px;line-height:1.5;color:var(--grn2);max-width:58ch;margin:0}
   .cur{animation:bl 1.06s steps(1) infinite}
   @keyframes bl{50%{opacity:0}}
 
@@ -85,8 +86,8 @@
   .opt:hover{background:var(--grn4);border-color:var(--grn)}
   .opt:focus-visible{outline:2px solid var(--grn);outline-offset:1px}
   .opt .key{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amb);flex:none}
-  .opt .t{font-size:29px;color:var(--wht);flex:none}
-  .opt .d{font-size:23px;color:var(--grn2)}
+  .opt .t{font-weight:700;font-size:22px;color:var(--wht);flex:none}
+  .opt .d{font-size:17px;color:var(--grn2)}
   .vote.done .opt{opacity:.26;pointer-events:none}
   .vote.done .opt.pick{opacity:1;background:var(--grn4);border-color:var(--grn)}
   .vote.done .opt.right{opacity:.66;border-color:var(--amb)}
@@ -95,16 +96,16 @@
   /* ---------- RÉVÉLATION ---------- */
   .rev{margin-top:40px;border-top:1px solid var(--grn3);padding-top:30px}
   .punch{
-    font-family:"Press Start 2P",monospace;font-size:clamp(15px,2.2vw,24px);line-height:1.65;
-    margin:0 0 26px;max-width:28ch;color:var(--grn);
+    font-family:"Press Start 2P",monospace;font-size:clamp(14px,2vw,22px);line-height:1.7;
+    margin:0 0 26px;max-width:30ch;color:var(--grn);
   }
-  .dl{display:flex;gap:26px;flex-wrap:wrap;font-size:27px;color:var(--wht)}
-  .dl .gp{color:var(--wht);font-size:27px;flex:none}
-  .dl .neg{color:var(--amb);font-size:27px;flex:none}
+  .dl{display:flex;gap:26px;flex-wrap:wrap;font-weight:700;font-size:21px;color:var(--wht)}
+  .dl .gp{color:var(--wht);font-size:21px;flex:none}
+  .dl .neg{color:var(--amb);font-size:21px;flex:none}
   .dl .nil{color:var(--grn2)}
   .lbl{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--grn2);display:block;margin-bottom:10px}
-  .why{font-size:25px;line-height:1.46;color:var(--wht);max-width:48ch;margin:0}
-  .q{font-size:clamp(27px,2.9vw,34px);line-height:1.36;color:var(--amb);max-width:34ch;margin:0}
+  .why{font-size:19px;line-height:1.5;color:var(--wht);max-width:48ch;margin:0}
+  .q{font-weight:700;font-size:clamp(21px,2.2vw,27px);line-height:1.42;color:var(--amb);max-width:34ch;margin:0}
 
   /* révélation progressive : on clique pour afficher */
   .discs{display:flex;gap:9px;flex-wrap:wrap;margin-top:30px}
@@ -122,14 +123,14 @@
   .rung{border-bottom:1px solid var(--grn4);padding:16px 0}
   .rung .top{display:flex;gap:16px;align-items:baseline}
   .rung .no{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amb);flex:none}
-  .rung .tx{font-size:clamp(25px,2.5vw,31px);line-height:1.34;color:var(--wht)}
+  .rung .tx{font-weight:600;font-size:clamp(19px,1.9vw,24px);line-height:1.4;color:var(--wht)}
   .rung.past .tx{color:var(--grn2)}
   .rung .vb{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0 45px}
   .rung .verdict{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amb);margin:12px 0 0 45px}
   .rungs.tight .rung{padding:9px 0}
-  .rungs.tight .tx{font-size:22px;line-height:1.3;color:var(--grn2)}
+  .rungs.tight .tx{font-weight:500;font-size:17px;line-height:1.35;color:var(--grn2)}
   .rungs.tight .vd{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--amb);margin-left:auto;padding-left:18px;white-space:nowrap;flex:none}
-  .sbtn{border:1px solid var(--grn3);padding:8px 16px;cursor:pointer;font-size:24px;color:var(--wht)}
+  .sbtn{border:1px solid var(--grn3);padding:9px 17px;cursor:pointer;font-weight:700;font-size:18px;color:var(--wht)}
   .sbtn:hover{background:var(--grn4);border-color:var(--grn)}
   .sbtn:focus-visible{outline:2px solid var(--grn);outline-offset:1px}
 
@@ -137,35 +138,34 @@
   .mini{list-style:none;padding:0;margin:0 0 30px;max-width:760px}
   .mini li{display:flex;gap:14px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--grn4)}
   .mini b{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--grn2);font-weight:400;flex:none}
-  .mini span{font-size:23px;line-height:1.3;color:var(--grn2)}
+  .mini span{font-size:17px;line-height:1.35;color:var(--grn2)}
   .mini .emp{color:var(--grn4)}
 
   /* ---------- LISTES / TABLEAUX ---------- */
   .plain{list-style:none;padding:0;margin:0;max-width:52ch}
   .plain li{padding:16px 0;border-bottom:1px solid var(--grn4)}
-  .plain p{margin:0;font-size:24px;line-height:1.44;color:var(--wht)}
+  .plain p{margin:0;font-size:18px;line-height:1.5;color:var(--wht)}
 
   .teams{list-style:none;padding:0;margin:26px 0 0;max-width:820px}
   .teams li{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--grn4)}
   .teams .eq{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amb);min-width:128px}
-  .teams .dn{font-size:26px;color:var(--wht)}
-  .teams .tg{font-size:19px;color:var(--grn2);margin-left:auto}
+  .teams .dn{font-weight:700;font-size:20px;color:var(--wht)}
+  .teams .tg{font-size:14px;color:var(--grn2);margin-left:auto}
 
   .laws{max-width:800px;margin-top:26px}
   .lawrow{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--grn3);padding:6px 0}
   .lawrow .n{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amb);text-shadow:none}
   .lawrow input{
     flex:1;background:transparent;border:none;color:var(--wht);
-    font-family:VT323,monospace;font-size:clamp(23px,2.6vw,29px);padding:7px 0;
-    text-shadow:0 0 7px rgba(217,255,228,.35);
+    font-family:inherit;font-weight:700;font-size:clamp(18px,2vw,23px);padding:8px 0;
   }
   .lawrow input:focus{outline:none}
   .lawrow input::placeholder{color:var(--grn4)}
   .lawlist{list-style:none;padding:0;margin:0;max-width:800px}
   .lawlist li{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--grn4)}
   .lawlist b{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amb);font-weight:400;text-shadow:none}
-  .lawlist span{font-size:clamp(22px,2.4vw,27px);line-height:1.3;color:var(--wht)}
-  .lawlist .emp{color:var(--grn4)}
+  .lawlist span{font-weight:700;font-size:clamp(17px,1.9vw,22px);line-height:1.38;color:var(--wht)}
+  .lawlist .emp{color:var(--grn3);font-weight:500;font-size:16px}
 
   .vb{display:flex;gap:9px;flex-wrap:wrap}
   .vb.set .sbtn{opacity:.24;pointer-events:none}
@@ -199,8 +199,8 @@
   .big{font-family:"Press Start 2P",monospace;font-size:clamp(58px,14vw,150px);line-height:1;margin:0;color:var(--grn);text-shadow:0 0 26px rgba(57,255,106,.6)}
   .vn{font-family:"Press Start 2P",monospace;font-size:clamp(15px,2.8vw,28px);line-height:1.5;margin:22px 0 18px}
   .bad,.bad.big{color:var(--amb);text-shadow:0 0 26px rgba(255,176,0,.5)}
-  .fin{display:flex;gap:26px;flex-wrap:wrap;margin-top:26px;font-size:22px;color:var(--wht)}
-  table{border-collapse:collapse;font-size:20px;width:100%;max-width:860px}
+  .fin{display:flex;gap:26px;flex-wrap:wrap;margin-top:26px;font-weight:700;font-size:19px;color:var(--wht)}
+  table{border-collapse:collapse;font-size:15px;width:100%;max-width:900px}
   th{text-align:left;font-family:"Press Start 2P",monospace;font-size:8px;color:var(--grn2);font-weight:400;padding:0 14px 8px 0;border-bottom:1px solid var(--grn3);text-shadow:none}
   td{padding:9px 14px 9px 0;border-bottom:1px solid var(--grn4);vertical-align:top;line-height:1.3}
   td.m{white-space:nowrap;color:var(--grn2)}
@@ -208,24 +208,24 @@
 
   .end{padding:64px 0}
   .end h2{font-size:clamp(17px,3.6vw,40px);line-height:1.55;max-width:20ch;margin-bottom:34px}
-  .end p{font-size:clamp(22px,2.9vw,32px);line-height:1.35;color:var(--grn2);max-width:26ch;margin:0}
+  .end p{font-weight:600;font-size:clamp(18px,2.3vw,25px);line-height:1.45;color:var(--grn2);max-width:28ch;margin:0}
 
   /* ---------- PIED ---------- */
   footer{position:sticky;bottom:0;z-index:20;background:var(--bg);border-top:1px solid var(--grn3);padding-bottom:env(safe-area-inset-bottom,0px)}
   .fw{max-width:1000px;margin:0 auto;padding:8px 22px;display:flex;align-items:center;gap:9px}
-  .nb{border:1px solid var(--grn3);padding:6px 13px;cursor:pointer;font-size:20px;color:var(--wht)}
+  .nb{border:1px solid var(--grn3);padding:7px 13px;cursor:pointer;font-weight:700;font-size:15px;color:var(--wht)}
   .nb:hover{background:var(--grn4);border-color:var(--grn)}
   .nb:focus-visible{outline:2px solid var(--grn);outline-offset:1px}
   .nb[disabled]{opacity:.22;pointer-events:none}
   .nb.go{border-color:var(--grn);color:var(--grn)}
-  .pos{flex:1;font-size:18px;color:var(--grn3);text-shadow:none}
-  .tm{font-size:21px;color:var(--grn2);cursor:pointer;padding:6px 11px;border:1px solid transparent;user-select:none}
+  .pos{flex:1;font-size:13px;color:var(--grn3)}
+  .tm{font-weight:700;font-size:16px;color:var(--grn2);cursor:pointer;padding:7px 11px;border:1px solid transparent;user-select:none}
   .tm:hover{border-color:var(--grn3)}
   .tm.run{color:var(--grn);border-color:var(--grn3)}
   .tm.out{color:var(--amb);animation:bl .85s steps(1) infinite}
 
   @media (max-width:760px){
-    body{font-size:21px}
+    body{font-size:17px}
     .hw{padding:8px 16px}
     main{padding:26px 16px}
     .g .nm{width:66px;font-size:7px}
@@ -252,6 +252,9 @@
   <footer><div class="fw">
     <button class="nb" id="prev">&lt;&lt;</button>
     <div class="pos" id="pos"></div>
+    <button class="nb" id="zm" title="Réduire le texte (touche −)">A−</button>
+    <button class="nb" id="zp" title="Agrandir le texte (touche +)">A+</button>
+    <button class="nb" id="crt" title="Effet écran cathodique">CRT</button>
     <div class="tm" id="tm" role="button" tabindex="0">--:--</div>
     <button class="nb" id="rst" title="Nouvelle partie">RESET</button>
     <button class="nb go" id="next">SUIVANT &gt;&gt;</button>
@@ -605,7 +608,7 @@
    punch:"LA PLUPART DES CLASSES PLACENT LA LIGNE À L'ÉTAPE 6. LA LOI LA PLACE À L'ÉTAPE 5.",
    txt:"Plusieurs législations adoptées depuis 2024 situent l'infraction à la création, pas à la diffusion : produire l'image suffit. Et ce n'est pas un débat théorique. Almendralejo, Espagne, septembre 2023 : une vingtaine de filles de 11 à 17 ans. Corée du Sud, 2024 : des centaines d'établissements, scandale national. L'étude de référence de 2019 trouvait que 96 % des vidéos deepfake en ligne étaient des contenus sexuels non consentis, visant presque exclusivement des femmes. Cette technologie a un usage majoritaire, et ce n'est pas le divertissement.",
    src:"Presse espagnole et sud-coréenne ; Deeptrace / Sensity, « The State of Deepfakes », 2019.",
-   q:"Entre l'étape 4 et l'étape 5, qu'est-ce qui a changé exactement ? Nommez-le sans employer le mot « nu »."},
+   q:"Qu'est-ce qui a changé exactement à cette marche ? Nommez-le sans employer le mot « nu »."},
 
   {id:"texte",name:"LE TEXTE",
    intro:"Même exercice, sur un objet que vous manipulez tous les jours : votre propre production écrite.",
@@ -620,7 +623,7 @@
    punch:"ENTRE L'ÉTAPE 1 ET L'ÉTAPE 6, RIEN NE CHANGE D'UN SEUL COUP.",
    txt:"C'est la difficulté réelle : il n'y a pas de rupture technique, seulement un glissement continu. Aucun règlement d'école écrit avant 2022 ne décrit les étapes 3 à 5, parce que le plagiat suppose une victime et qu'ici il n'y en a pas. Et le détecteur qui vous accuserait est lui-même biaisé : une étude de Stanford a classé plus de 61 % des copies d'anglais rédigées par des non-anglophones comme « générées par IA ».",
    src:"Liang et al., Patterns, 2023 ; règlements d'établissement antérieurs à 2022.",
-   q:"Votre ligne est à quelle étape ? Maintenant : sauriez-vous prouver que vous étiez du bon côté, si on vous accusait de l'étape suivante ?"},
+   q:"Qu'est-ce qui a changé exactement à cette marche ? Et sauriez-vous prouver que vous étiez du bon côté, si on vous accusait de la marche suivante ?"},
 
   {id:"voix",name:"LA VOIX",
    intro:"Trois secondes d'audio suffisent. Vous en publiez plusieurs heures par mois.",
@@ -635,7 +638,7 @@
    punch:"L'ÉTAPE 6 UTILISE EXACTEMENT LA MÊME TECHNOLOGIE QUE L'ÉTAPE 1.",
    txt:"Il n'y a aucune différence technique entre l'usage le plus légitime et l'escroquerie. La seule variable est le consentement de la personne dont la voix est reproduite, et cette variable disparaît complètement à l'étape 3 : personne ne peut plus donner son accord. À l'étape 4, dans la plupart des systèmes juridiques, ce n'est plus une blague mais une usurpation d'identité.",
    src:"",
-   q:"À partir de quelle étape l'accord de la personne devient-il obligatoire ? Et à l'étape 3, qui donne cet accord ?"},
+   q:"Qu'est-ce qui a changé exactement à cette marche ? Et sur la marche du chanteur mort, qui donne l'accord ?"},
 
   {id:"data",name:"LES DONNÉES",
    intro:"Celle-ci vous concerne directement : c'est votre mémoire, et c'est le cœur de l'intégrité scientifique.",
@@ -650,38 +653,262 @@
    punch:"L'ÉTAPE 4 EST LA PLUS DANGEREUSE, PARCE QU'ELLE SE JUSTIFIE.",
    txt:"Retirer un outlier se défend, arrondir se défend, et compléter douze réponses manquantes « pour ne pas perdre l'échantillon » se défend aussi — avec des mots presque identiques. C'est pourtant à cette étape que vous cessez de décrire le monde pour le fabriquer. Et un jeu de données inventé de façon plausible est indétectable : en 2024, une revue à comité de lecture a publié puis retiré un article contenant des figures manifestement générées, que la relecture n'avait pas arrêtées. L'intégrité ne repose donc pas sur la détection, elle repose sur la déclaration.",
    src:"Rétractation d'un article de la revue Frontiers, février 2024 ; définitions de la fabrication et de la falsification de données.",
-   q:"À l'étape 4, vous n'avez menti sur aucun chiffre existant. Alors sur quoi avez-vous menti ?"}
+   q:"Vous n'avez menti sur aucun chiffre existant. Alors sur quoi avez-vous menti ?"}
   ];
+
+  /* ======================================================
+     ROUND 3 — LA BASCULE
+     Monter l'échelle est facile. Dire pourquoi ça bascule
+     à cet endroit précis, et comment l'empêcher, ne l'est pas.
+     Chaque critère proposé par la classe est mis en échec.
+     ====================================================== */
+
+  var BASC = {
+
+  image:{
+   crit:[
+    {t:"LE CONSENTEMENT",d:"Elle n'a pas donné son accord.",g:{s:4},
+     punch:"ALORS L'ÉTAPE 5 DEVIENT OK SI ELLE DIT OUI ?",
+     txt:"Posez la question telle quelle : une camarade donne son accord écrit pour qu'on génère une image dénudée d'elle. Votre critère dit que c'est permis. Vous signez ? Et si elle a seize ans ? Et si elle change d'avis dans deux ans, alors que l'image circule déjà ? Le consentement est nécessaire, il n'est pas suffisant — c'est précisément pourquoi le droit y ajoute l'âge, la révocabilité, et parfois l'interdiction pure.",
+     why:"SOCIETY monte : c'est le bon premier critère, celui que retiennent tous les systèmes juridiques. Vous ne perdez que l'illusion qu'il se suffit à lui-même.",
+     q:"Un accord donné à seize ans, retiré à vingt-cinq, sur une image déjà partagée : votre règle prévoit quoi ?"},
+    {t:"L'INTENTION",d:"C'était pour nuire.",g:{s:-6,p:2},
+     punch:"COMMENT PROUVEZ-VOUS UNE INTENTION ?",
+     txt:"« C'était une blague. » « Je ne l'ai montrée à personne. » « Je voulais juste tester l'outil. » L'intention ne se mesure pas, elle se déclare, et c'est exactement la défense employée dans les affaires réelles. Un critère qu'on ne peut pas prouver protège l'auteur, pas la victime.",
+     why:"SOCIETY baisse : vous venez d'adopter le critère le plus simple à contourner de la liste. PROGRESS monte un peu, parce que c'est aussi celui qui laisse le plus de place aux usages créatifs légitimes, et ce n'est pas rien.",
+     q:"Si l'intention décide, qui doit prouver quoi — et avec quoi ?"},
+    {t:"LA DIFFUSION",d:"Tant que ça ne sort pas, ça va.",g:{s:-4},
+     punch:"LA LOI NE VOUS SUIT PAS SUR CE POINT.",
+     txt:"Plusieurs législations adoptées depuis 2024 placent l'infraction à la création, pas au partage. La raison est pratique : une image qui existe finit par circuler — un téléphone perdu, une sauvegarde automatique, une capture d'écran. Et la victime ne pourra jamais prouver qu'elle n'a pas circulé.",
+     why:"SOCIETY baisse parce que ce critère, très intuitif, transfère la surveillance à la victime : c'est elle qui devra vérifier, pendant des années, une image qu'elle n'a jamais demandée.",
+     q:"Combien de temps une image reste-t-elle sous le contrôle de celui qui l'a créée ?"},
+    {t:"LA SEXUALISATION",d:"On a transformé quelqu'un en objet sexuel.",g:{s:6},
+     punch:"C'EST LE CRITÈRE DU DROIT. IL RESTE À L'ÉCRIRE.",
+     txt:"C'est bien celui que retiennent les textes récents, qui parlent d'images intimes ou sexuellement explicites non consenties. La difficulté commence à la frontière : un maillot de bain généré ? Une pose ? Un vêtement moulant ? Chaque mot de la définition sera plaidé, et écrire cette frontière est le travail réel du législateur.",
+     why:"SOCIETY monte franchement : ce critère nomme l'atteinte au lieu de décrire le comportement, ce qui le rend applicable. Il ne vous dispense pas d'en écrire les bords.",
+     q:"Écrivez la frontière en une phrase. Maintenant, trouvez le cas qui la fait tomber."}
+   ],
+   prev:[
+    {t:"FILIGRANE TECHNIQUE",d:"Marquage obligatoire des images générées.",g:{p:4,s:2},
+     punch:"UNE CAPTURE D'ÉCRAN SUFFIT À L'EFFACER.",
+     txt:"Les métadonnées disparaissent au premier réencodage, et le filigrane visible se recadre. Surtout : le marquage ne prévient rien, il documente après coup. Utile pour un média qui vérifie une vidéo politique, inutile dans un groupe de classe où personne ne vérifie rien.",
+     why:"PROGRESS monte parce que c'est peu coûteux et exigible des fournisseurs. SOCIETY à peine, parce que ça n'empêche pas l'acte, ça aide seulement à l'établir.",
+     q:"Quelle mesure agit avant l'image, et non après ?"},
+    {t:"RETRAIT DES APPLICATIONS",d:"L'app qui dénude est interdite et déréférencée.",g:{p:-4,s:10},
+     punch:"LA MESURE LA PLUS EFFICACE, ET LA PLUS COURTE.",
+     txt:"Retirer ces applications des magasins et leur couper les moyens de paiement réduit massivement l'usage réel, parce que la grande majorité des utilisateurs ne va pas plus loin qu'un magasin d'applications. La limite est connue : modèles ouverts, installation manuelle, sites hors d'Europe. Cette mesure n'achète pas une solution, elle achète des années.",
+     why:"SOCIETY monte fortement pour un coût réel en PROGRESS : vous acceptez de bloquer une catégorie entière d'outils, dont certains usages légitimes, contre la baisse la plus rapide de l'usage effectif.",
+     q:"Gagner cinq ans sur un problème qu'on ne sait pas résoudre : ça vaut quoi, exactement ?"},
+    {t:"LE DROIT PÉNAL",d:"Création et partage punis, retrait accéléré.",g:{s:8},
+     punch:"IL FAUT ENCORE QUE QUELQU'UN PORTE PLAINTE.",
+     txt:"Le droit pénal ne fonctionne que si la victime sait, ose, et trouve un service de police qui prend la plainte au sérieux. Sans procédure de retrait rapide et sans obligation de signalement pour les établissements, la loi existe surtout sur le papier — et c'est le reproche fait à toutes celles adoptées depuis 2024.",
+     why:"SOCIETY monte parce que la sanction nomme publiquement ce qui est interdit, ce qui compte. Le gain reste partiel tant que la charge de déclencher la procédure repose sur la personne visée.",
+     q:"Dans votre école, à qui une victime irait-elle parler en premier ? Cette personne sait-elle quoi faire ?"},
+    {t:"LE GROUPE ET L'ÉCOLE",d:"La classe arrête ça en trente secondes.",g:{s:6,p:2},
+     punch:"LA SEULE MESURE QUI AGIT AVANT L'IMAGE.",
+     txt:"Dans chacune des affaires documentées, plusieurs personnes ont vu les images circuler et n'ont rien dit. Le filigrane, la plainte et le retrait arrivent tous après. La norme du groupe est le seul levier qui intervient avant — et c'est aussi le seul que vous contrôlez entièrement.",
+     why:"SOCIETY monte, et PROGRESS un peu : ça ne coûte rien à personne. Mais c'est la mesure la plus fragile, parce qu'elle repose sur le courage de la première personne qui parle.",
+     q:"Qui, dans cette salle, dirait quelque chose le premier ? Et qu'est-ce qui le rendrait plus facile ?"}
+   ]},
+
+  texte:{
+   crit:[
+    {t:"LES IDÉES SONT DE VOUS",d:"La paternité intellectuelle suffit.",g:{p:6,s:4},
+     punch:"ALORS LES ÉTAPES 3 ET 4 SONT PERMISES.",
+     txt:"Votre critère autorise l'IA à écrire tout le texte, tant que le raisonnement est le vôtre. C'est vers là que beaucoup d'établissements se dirigent, et ça change ce qu'on évalue : plus la rédaction, mais la pensée. La vraie question devient celle-ci : vos épreuves actuelles évaluent-elles la pensée, ou la rédaction ?",
+     why:"Les deux jauges montent : c'est un critère cohérent et compatible avec le métier réel. Il impose en échange de réécrire les épreuves, et ce travail n'est pas fait.",
+     q:"Votre dernier examen évaluait quoi, honnêtement : votre raisonnement, ou votre capacité à rédiger vite ?"},
+    {t:"LA DÉCLARATION",d:"Tout est permis si c'est déclaré.",g:{s:6,p:2},
+     punch:"PERSONNE NE DÉCLARE CE QUI EST PUNI.",
+     txt:"La déclaration ne fonctionne que si déclarer coûte moins cher que cacher. Tant qu'annoncer l'usage d'une IA fait baisser la note, personne n'annonce rien, et vous obtenez un règlement respecté par les honnêtes et contourné par les autres. Le mécanisme suppose qu'un usage déclaré soit neutre, voire valorisé.",
+     why:"SOCIETY monte : c'est le seul critère vérifiable sans surveillance. Il n'a de valeur que si le barème est réécrit en conséquence.",
+     q:"Dans votre école, déclarer un usage d'IA fait-il monter ou baisser la note ? Répondez d'abord, puis regardez ce que ça implique."},
+    {t:"POUVOIR LE DÉFENDRE",d:"Chaque phrase doit tenir à l'oral.",g:{s:8,p:-4},
+     punch:"LE CRITÈRE LE PLUS SOLIDE. ET LE PLUS CHER.",
+     txt:"Un oral repère l'étape 5 en trois minutes et se moque complètement de l'outil utilisé. C'est la seule réponse qui ne dépend d'aucune détection. Deux limites réelles : le coût en heures d'enseignant, et le fait qu'il favorise celui qui parle avec aisance sur celui qui écrit bien.",
+     why:"SOCIETY monte nettement parce que ce critère est robuste à toute évolution technique. PROGRESS baisse du prix exact : des heures d'oral que personne n'a dans son horaire.",
+     q:"Combien d'heures d'oral par étudiant votre programme peut-il réellement financer ?"},
+    {t:"SEUL LE RÉSULTAT COMPTE",d:"Peu importe la méthode.",g:{p:10,s:-12},
+     punch:"ALORS L'ÉTAPE 6 EST PERMISE AUSSI.",
+     txt:"Acheter un mémoire produit exactement le même résultat. Si seul le résultat compte, le plagiat n'est pas condamnable non plus, et le diplôme certifie une capacité d'achat. C'est la position la plus simple à tenir dix secondes et la plus intenable ensuite.",
+     why:"PROGRESS monte parce que c'est efficace et honnête sur le marché du travail immédiat. SOCIETY s'effondre parce que vous venez de retirer toute valeur de signal au diplôme que vous préparez.",
+     q:"Si le diplôme ne certifie plus rien, qu'est-ce que vous venez chercher ici ?"}
+   ],
+   prev:[
+    {t:"DÉTECTEUR AUTOMATIQUE",d:"Contrôle systématique des travaux.",g:{p:2,s:-10},
+     punch:"LE DÉTECTEUR ACCUSE LES MAUVAIS.",
+     txt:"Une étude de Stanford a classé plus de 61 % des copies rédigées par des non-anglophones comme générées par IA, contre presque aucune chez les locuteurs natifs. Vous n'obtenez pas un filtre à tricheurs, vous obtenez un filtre à maîtrise de la langue — et une sanction qui tombe sur ceux qui ont déjà le plus de mal.",
+     why:"SOCIETY plonge : c'est la seule mesure de la liste qui crée de nouvelles victimes. PROGRESS monte à peine, parce qu'elle est bon marché et donne l'impression d'agir.",
+     q:"Quel taux de faux positifs accepteriez-vous sur un conseil de discipline ?"},
+    {t:"ORAL SYSTÉMATIQUE",d:"Toute production écrite se défend.",g:{s:10,p:-6},
+     punch:"ÇA MARCHE. ÇA COÛTE DES HEURES.",
+     txt:"C'est la mesure la plus efficace connue, et la plus ancienne : elle existait avant l'IA et survivra au prochain modèle. Son seul obstacle est budgétaire, ce qui veut dire qu'elle est décidée par quelqu'un qui n'est pas dans cette salle.",
+     why:"SOCIETY monte au maximum de l'échelle, PROGRESS paie les heures. C'est le compromis le plus clair du round : de l'argent contre de la fiabilité.",
+     q:"Qui, dans l'établissement, arbitre cette dépense ? Lui avez-vous déjà posé la question ?"},
+    {t:"DÉCLARATION SANS PÉNALITÉ",d:"Annoncer son usage ne coûte rien.",g:{s:6,p:4},
+     punch:"ON N'OBTIENT DE L'HONNÊTETÉ QU'EN LA RENDANT GRATUITE.",
+     txt:"Une annexe méthodologique obligatoire, qui décrit ce qui a été généré, vérifié et réécrit, et qui n'entre pas dans la note. Le jour où déclarer devient neutre, la déclaration devient exacte — et vous récupérez une information que nulle détection ne vous donnera jamais.",
+     why:"Les deux jauges montent : c'est la mesure la moins chère du lot et la seule qui produise des données fiables sur ce que les étudiants font vraiment.",
+     q:"Que feriez-vous d'une annexe qui dit « l'IA a écrit 70 % de ce texte » ? Votre réponse décide si le dispositif tient."},
+    {t:"CHANGER L'ÉPREUVE",d:"Évaluer ce que l'IA ne fait pas.",g:{s:8,p:2},
+     punch:"LA SEULE MESURE QUI NE SE PÉRIME PAS.",
+     txt:"Une épreuve construite autour de la décision, de la présence, de la responsabilité ou d'un contexte que personne n'a écrit nulle part ne craint aucun modèle. Elle demande beaucoup plus de travail à concevoir, et c'est pour cette raison qu'on préfère acheter un détecteur.",
+     why:"SOCIETY monte parce que vous supprimez le problème au lieu de le surveiller, et PROGRESS un peu parce que ces épreuves préparent mieux au métier réel.",
+     q:"Concevez une épreuve que l'IA ne peut pas passer à votre place. Vous avez deux minutes."}
+   ]},
+
+  voix:{
+   crit:[
+    {t:"L'ACCORD DE LA PERSONNE",d:"Sans accord, c'est non.",g:{s:6},
+     punch:"À L'ÉTAPE 3, PERSONNE NE PEUT PLUS DONNER SON ACCORD.",
+     txt:"Le chanteur est mort. Qui hérite de sa voix : ses ayants droit, son label, sa famille, personne ? Le Danemark a proposé en 2025 d'étendre une logique de droit d'auteur à la voix et aux traits d'une personne, précisément parce qu'aucun texte ne réglait le cas. Votre critère est bon, il lui manque une règle de succession.",
+     why:"SOCIETY monte : c'est le critère central, celui qui sépare l'étape 2 de l'étape 5. Il devient muet dès que la personne n'est plus là pour répondre.",
+     q:"Votre voix, après vous : à qui appartient-elle, et pour combien de temps ?"},
+    {t:"LE PRÉJUDICE FINANCIER",d:"Il faut une perte d'argent.",g:{s:-6,p:2},
+     punch:"ALORS L'ÉTAPE 4 EST PERMISE.",
+     txt:"Cloner la voix de votre professeur pour une blague ne fait perdre un euro à personne. Ça peut en revanche détruire une réputation, une relation de travail, ou la crédibilité d'un enseignant devant deux cents étudiants. Un critère financier ne voit aucune de ces atteintes.",
+     why:"SOCIETY baisse parce que vous excluez tout le préjudice moral, qui est la majorité des cas réels. PROGRESS monte légèrement : un critère chiffrable est plus simple à appliquer.",
+     q:"Nommez un dommage grave qui ne coûte rien en euros. Il y en a plus que vous ne pensez."},
+    {t:"LA TROMPERIE",d:"On fait croire que c'est la personne.",g:{s:8},
+     punch:"C'EST LE CRITÈRE DE L'USURPATION D'IDENTITÉ.",
+     txt:"Il couvre l'étape 4 comme l'étape 6, il ne dépend pas du montant en jeu, et il existe déjà dans presque tous les codes pénaux : se faire passer pour quelqu'un d'autre est une infraction ancienne. Sa seule vraie limite est la parodie, qui fait croire aussi, mais brièvement et de façon assumée.",
+     why:"SOCIETY monte fortement : vous avez trouvé le critère qui traverse toute l'échelle sans exception, et il est déjà dans le droit.",
+     q:"Où placez-vous la parodie et l'hommage dans ce critère ?"},
+    {t:"L'USAGE COMMERCIAL",d:"Interdit dès qu'il y a de l'argent.",g:{s:-8,p:4},
+     punch:"ALORS L'ARNAQUE À VOTRE MÈRE EST HORS CHAMP.",
+     txt:"Personne n'a vendu quoi que ce soit à l'étape 6 : on a demandé un virement en se faisant passer pour vous. Votre critère protège très bien les acteurs et les chanteurs, c'est-à-dire ceux qui ont déjà des avocats, et laisse tout le monde sans défense.",
+     why:"SOCIETY baisse nettement : ce critère protège ceux qui monétisent leur voix et personne d'autre. PROGRESS monte parce que c'est le plus simple à écrire dans un contrat.",
+     q:"Une règle qui protège d'abord ceux qui ont des avocats : combien de fois l'avez-vous déjà croisée ?"}
+   ],
+   prev:[
+    {t:"MOT DE PASSE FAMILIAL",d:"Un mot convenu avec ses proches.",g:{s:6},
+     punch:"LA SEULE MESURE APPLICABLE CE SOIR.",
+     txt:"Coût nul, efficacité immédiate, aucune loi requise. Elle ne protège que les familles qui l'ont mise en place, donc jamais les personnes les plus isolées ni les plus âgées — c'est-à-dire exactement les cibles les plus fréquentes.",
+     why:"SOCIETY monte pour une mesure gratuite, et s'arrête là : une protection qui dépend de l'initiative individuelle laisse dehors ceux qui en ont le plus besoin.",
+     q:"Vos grands-parents ont-ils ce mot de passe ? Sinon, qui va leur en parler ?"},
+    {t:"VÉRIFICATION BANCAIRE",d:"Contrôle renforcé des virements urgents.",g:{s:8,p:-4},
+     punch:"LE SEUL MAILLON QUI AGIT À L'ÉCHELLE.",
+     txt:"La banque voit le virement, connaît les schémas de fraude, et la loi a déjà prise sur elle. C'est la mesure qui protège sans rien demander à la victime. Elle ralentit en échange tous les virements urgents légitimes, et ce coût retombe sur tout le monde.",
+     why:"SOCIETY monte fortement parce que la protection devient automatique. PROGRESS baisse : des frictions ajoutées à des millions d'opérations honnêtes.",
+     q:"Combien de minutes d'attente acceptez-vous sur un virement urgent pour éviter cette arnaque ?"},
+    {t:"CONSENTEMENT ÉCRIT OBLIGATOIRE",d:"Toute voix clonée exige un accord.",g:{s:4,p:-2},
+     punch:"PROTÈGE LES IDENTIFIABLES, PAS LES ANONYMES.",
+     txt:"Excellente protection pour un acteur, un chanteur, un homme politique : des gens dont la voix a une valeur et un nom. Pour vous, dont la voix traîne dans quarante stories, la règle existe mais personne ne la fera appliquer pour trois secondes d'audio.",
+     why:"SOCIETY monte modérément : la règle est juste et son application dépend de la capacité de la victime à se défendre, ce qui recrée l'inégalité de départ.",
+     q:"Qui, concrètement, porterait plainte pour trois secondes de votre voix ?"},
+    {t:"SIGNATURE TECHNIQUE",d:"Tout audio généré est marqué.",g:{p:2},
+     punch:"UNE SIGNATURE NE SURVIT PAS À UN APPEL TÉLÉPHONIQUE.",
+     txt:"Le réseau téléphonique compresse, recode et dégrade le signal : le marquage disparaît en route. La mesure a du sens pour un fichier audio publié en ligne, pas pour la voix qui sort du téléphone de votre mère.",
+     why:"PROGRESS monte à peine et SOCIETY pas du tout : une mesure qui ne couvre pas le cas d'usage principal de la fraude n'apporte pas de protection réelle.",
+     q:"Une solution technique qui ne couvre pas le scénario principal : pourquoi est-elle quand même annoncée ?"}
+   ]},
+
+  data:{
+   crit:[
+    {t:"LA CORRESPONDANCE AU RÉEL",d:"Chaque chiffre doit renvoyer à un fait.",g:{s:8},
+     punch:"CE CRITÈRE COUPE EXACTEMENT À L'ÉTAPE 4.",
+     txt:"Retirer un outlier et arrondir portent sur des données qui existent. Les douze réponses générées ne correspondent à rien : aucune personne ne les a données. C'est le seul critère de la liste qui tranche au bon endroit sans avoir besoin de deviner une intention.",
+     why:"SOCIETY monte franchement : vous avez trouvé la ligne de partage entre décrire le monde et le fabriquer, et elle est vérifiable par n'importe qui.",
+     q:"Et une donnée manquante remplacée par une moyenne statistique : elle correspond à quoi ?"},
+    {t:"LA TRANSPARENCE",d:"Tout est permis si c'est déclaré.",g:{s:2,p:2},
+     punch:"UN FAUX DÉCLARÉ RESTE UN FAUX.",
+     txt:"Si vous écrivez « douze réponses ont été générées », vous êtes honnête et votre échantillon ne vaut plus rien. La transparence règle la question de la faute personnelle, pas celle de la valeur du résultat, et ce sont deux choses différentes qu'on confond souvent.",
+     why:"Les deux jauges bougent peu : la déclaration vous protège, vous, et ne répare pas l'enquête. C'est nécessaire et insuffisant.",
+     q:"Entre un travail malhonnête et un travail honnêtement sans valeur, lequel préférez-vous encadrer ?"},
+    {t:"L'INTENTION DE TROMPER",d:"Il faut avoir voulu mentir.",g:{s:-6},
+     punch:"À L'ÉTAPE 4, PERSONNE NE VEUT TROMPER.",
+     txt:"L'étudiant voulait sauver son échantillon, pas mentir. Il se raconte qu'il comble un trou, et il détruit pourtant toute validité de son enquête. C'est ce qui rend cette étape la plus dangereuse : elle ne ressemble pas à une fraude, ni de l'extérieur ni de l'intérieur.",
+     why:"SOCIETY baisse : un critère fondé sur l'intention laisse passer précisément le cas le plus fréquent et le plus destructeur.",
+     q:"Une faute qu'on commet en croyant bien faire : comment l'empêche-t-on ?"},
+    {t:"LA REPRODUCTIBILITÉ",d:"Quelqu'un doit pouvoir refaire le travail.",g:{s:10,p:-2},
+     punch:"C'EST L'ÉTAPE 6. ET C'EST LA BONNE RÉPONSE.",
+     txt:"Le moment où l'on vous demande votre fichier brut n'est pas une menace, c'est la définition même du travail scientifique. Un résultat qui ne peut pas être refait par un tiers n'est pas un résultat, c'est une affirmation. Tous les autres critères se déduisent de celui-là.",
+     why:"SOCIETY monte au maximum : c'est le critère dont découlent tous les autres, et le seul qui se vérifie sans faire confiance à personne. PROGRESS baisse un peu : archiver et documenter prend du temps.",
+     q:"Votre dernier travail chiffré : pourriez-vous produire le fichier brut aujourd'hui ?"}
+   ],
+   prev:[
+    {t:"DÉPÔT DES DONNÉES BRUTES",d:"Fichier source remis avec le travail.",g:{s:10,p:-2},
+     punch:"COÛT NUL, EFFICACITÉ TOTALE, PRESQUE JAMAIS EXIGÉ.",
+     txt:"Un fichier joint au dépôt du mémoire suffit à rendre l'étape 5 impossible et l'étape 4 visible. La mesure ne demande aucune technologie, aucune détection, aucun budget. Elle n'est pas appliquée parce que personne n'a envie d'ouvrir les fichiers.",
+     why:"SOCIETY monte au maximum pour un coût quasi nul. PROGRESS baisse à peine, du temps d'archivage — et c'est la meilleure affaire du round.",
+     q:"Si c'est gratuit et efficace, pourquoi votre école ne le fait-elle pas déjà ?"},
+    {t:"CONTRÔLE ALÉATOIRE",d:"Un mémoire sur dix est audité.",g:{s:8,p:-4},
+     punch:"UN SUR DIX SUFFIT À CHANGER LES DIX.",
+     txt:"C'est le principe du contrôle fiscal : l'effet ne vient pas du nombre de contrôles mais de leur possibilité. Encore faut-il que l'audit soit réel, et que celui qui le mène ait le temps et le mandat d'aller au bout.",
+     why:"SOCIETY monte fortement pour un coût contenu, parce que la dissuasion porte sur toute la promotion. PROGRESS baisse du temps des jurys.",
+     q:"Un contrôle annoncé mais jamais exécuté : ça produit quoi, exactement ?"},
+    {t:"DÉCLARATION DE TRAITEMENT",d:"Outliers retirés, arrondis, données manquantes.",g:{s:6,p:2},
+     punch:"LA MOITIÉ DES FAUTES DISPARAÎT QUAND IL FAUT L'ÉCRIRE.",
+     txt:"Beaucoup de manipulations douteuses ne survivent pas au moment où il faut les noter noir sur blanc dans une annexe. Ce n'est pas de la surveillance, c'est une obligation de formuler — et formuler suffit souvent à renoncer.",
+     why:"Les deux jauges montent : la mesure est légère, elle éduque au lieu de punir, et elle produit une trace utilisable en cas de contestation.",
+     q:"Quelle manipulation de vos données ne voudriez-vous pas devoir écrire ?"},
+    {t:"INTERDIRE L'IA SUR LES DONNÉES",d:"Aucun traitement automatisé.",g:{p:-8,s:2},
+     punch:"INAPPLICABLE, ET ELLE BLOQUE LES BONS USAGES.",
+     txt:"L'IA sert aussi à repérer les incohérences, coder des réponses ouvertes et détecter les doublons — des usages qui améliorent la qualité. Une interdiction générale est invérifiable et sanctionne surtout ceux qui l'auraient déclarée.",
+     why:"PROGRESS chute pour un gain social minime : vous supprimez des usages utiles sans empêcher la fabrication, qui ne laisse de toute façon aucune trace.",
+     q:"Une règle que personne ne peut vérifier : qui la respecte, en pratique ?"}
+   ]}
+  };
 
   /* ======================================================
      ROUND 4 — ÉPREUVES DU CLASS AI ACT
      ====================================================== */
 
   var EPREUVES = [
+
   {n:"LE SERVEUR AU NEVADA",
-   sit:"Le service qui a généré les images est hébergé au Nevada. L'entreprise n'a aucun bureau en Europe. L'utilisateur est un élève de Bruxelles.",
-   q:"Si votre réponse est « on bloque le site », dites qui exécute le blocage, en combien de temps, et ce qui se passe le lendemain avec un autre nom de domaine."},
+   sit:"Une application hébergée au Nevada génère des images dénudées à partir de n'importe quelle photo. Gratuite, dans le navigateur, sans vérification d'âge. L'entreprise a trois employés, aucun bureau en Europe, et son siège change deux fois par an. Un élève de Bruxelles s'en sert sur des camarades de classe.",
+   fact:"L'AI Act s'applique en principe aux fournisseurs qui mettent un système sur le marché européen, où qu'ils soient établis. Le problème n'est pas le texte, c'est l'exécution : notifier, sanctionner et recouvrer une amende auprès d'une société de trois personnes sans actif en Europe est presque impossible. Le levier réel passe par les intermédiaires — magasins d'applications, processeurs de paiement, hébergeurs — que le règlement sur les services numériques peut contraindre au retrait.",
+   q:"Si votre réponse est « on bloque le site », dites qui exécute le blocage, en combien de temps, et ce qui se passe le lendemain avec un nouveau nom de domaine."},
+
   {n:"L'AUTEUR A QUATORZE ANS",
-   sit:"Celui qui a généré et diffusé les images est en troisième secondaire. La victime est dans sa classe.",
-   q:"Punir un mineur et protéger une mineure : votre loi arbitre, ou elle se tait et laisse l'école s'arranger ?"},
+   sit:"Même affaire. L'auteur a quatorze ans, la victime treize, ils sont dans la même classe et se croisent tous les jours. Les parents de la victime portent plainte. Les parents de l'auteur plaident une bêtise d'adolescent et menacent de poursuivre l'école pour diffamation.",
+   fact:"Les mineurs relèvent d'un régime distinct : en Belgique, la protection de la jeunesse privilégie la mesure éducative sur la sanction pénale. Dans l'affaire d'Almendralejo, en Espagne, les mineurs poursuivis ont écopé de peines aménagées, essentiellement de la mise à l'épreuve et des stages de sensibilisation. Reste entière la question que la loi ne règle pas : la victime, elle, reste dans la même classe.",
+   q:"Votre loi punit un enfant pour protéger une enfant. Elle arbitre, ou elle laisse l'école s'arranger toute seule ?"},
+
   {n:"VOS DEUX LOIS SE CONTREDISENT",
-   sit:"Votre loi de transparence exige de pouvoir prouver qu'un contenu a été généré. Votre loi de protection des données interdit de conserver l'historique qui permettrait de le prouver.",
-   q:"Laquelle gagne, et qui tranche : un juge, un régulateur, ou celui des deux camps qui a les meilleurs avocats ?"},
+   sit:"Une plateforme est accusée d'avoir diffusé un contenu généré sans le signaler. Pour le prouver il faut le journal de génération : qui a produit le fichier, quand, avec quel modèle. Votre loi de transparence l'exige. Votre loi de protection des données interdit de conserver ces journaux au-delà de trente jours. La plainte arrive au quatrième mois.",
+   fact:"Ce conflit est réel et non résolu : les obligations de traçabilité et le principe de minimisation des données tirent dans des directions opposées, et les régulateurs tranchent au cas par cas. En pratique, celui qui gagne est celui qui peut payer trois ans de procédure — ce qui n'est presque jamais la personne visée par le contenu.",
+   q:"Laquelle de vos deux lois gagne, et qui tranche : un juge, un régulateur, ou le camp qui a les meilleurs avocats ?"},
+
   {n:"LA LOI QUI COÛTE DES VIES",
-   sit:"Votre loi interdit toute décision médicale non explicable. Un système non explicable détecte certains cancers onze mois plus tôt que les médecins.",
+   sit:"Un hôpital veut déployer un système qui détecte certains cancers du sein onze mois plus tôt que la lecture humaine, avec un taux de faux positifs inférieur à celui des radiologues. Il est inexplicable : personne ne peut dire sur quoi il se fonde. Votre loi impose que toute décision médicale soit explicable. Le comité d'éthique demande une dérogation.",
+   fact:"L'AI Act classe ces systèmes à haut risque et impose supervision humaine, documentation et évaluation de conformité — mais il n'exige pas l'explicabilité au sens fort, parce qu'aucun modèle performant ne la fournirait. Le compromis retenu partout est procédural : un humain décide et signe, même sans comprendre le détail du calcul.",
    q:"Vous maintenez l'interdiction ? Alors combien de mois de retard au diagnostic votre principe vaut-il ? Donnez un nombre, à voix haute."},
+
   {n:"LE CONTRÔLEUR N'EXISTE PAS",
-   sit:"Votre loi impose un audit annuel indépendant. Il y a des dizaines de milliers de systèmes concernés dans le pays, et l'autorité de contrôle compte douze personnes.",
-   q:"Une loi que personne ne contrôle protège qui, exactement ? Et à qui profite-t-elle d'exister quand même ?"},
+   sit:"Votre loi impose un audit annuel indépendant pour tout système à haut risque. Rien qu'en Belgique, cela concerne les administrations, les hôpitaux, les banques, les assureurs, les écoles et les grandes entreprises : plusieurs milliers de systèmes. L'autorité de contrôle dispose d'une douzaine de personnes et d'un budget qui ne bougera pas.",
+   fact:"C'est la critique la plus documentée de l'AI Act : les obligations existent, les moyens de contrôle beaucoup moins. Les autorités nationales de protection des données ont connu exactement la même trajectoire après 2018, avec des délais d'instruction de plusieurs années. Une obligation sans contrôleur ne disparaît pas : elle devient un risque juridique que seuls les gros acteurs savent gérer, ce qui avantage les gros acteurs.",
+   q:"Une loi que personne ne contrôle protège qui ? Et à qui profite-t-elle d'exister quand même ?"},
+
   {n:"ET VOUS ?",
-   sit:"Votre loi s'applique-t-elle à votre école ? À ce cours ? À l'IA que vous avez utilisée cette semaine pour préparer un travail ?",
-   q:"Une règle dont ses auteurs s'exemptent : comment l'appelle-t-on ? Relisez vos trois lois et cherchez l'exemption."},
+   sit:"Votre école utilise trois systèmes : un détecteur de plagiat qui note une probabilité, un outil qui recommande des parcours et des options aux étudiants, et un assistant qui répond aux questions administratives à partir des dossiers. Aucun des trois n'a été audité, et aucun n'a fait l'objet d'une information aux étudiants.",
+   fact:"L'éducation figure explicitement parmi les domaines à haut risque de l'AI Act, et la reconnaissance des émotions est interdite dans les établissements d'enseignement. Autrement dit : le texte ne visait pas que les grandes plateformes, il visait aussi le bâtiment dans lequel vous êtes assis.",
+   q:"Appliquez vos trois lois à votre propre école, ce semestre. Que faudrait-il arrêter lundi ?"},
+
   {n:"IL A CLIQUÉ SUR ACCEPTER",
-   sit:"L'utilisateur a coché la case. Il avait dix-neuf ans, il voulait le service, la case était pré-cochée et le texte faisait quarante pages.",
-   q:"Est-ce un consentement ? Si oui, votre loi ne sert à rien. Si non, quel critère vérifiable la remplace ?"},
+   sit:"Une étudiante de dix-neuf ans s'inscrit sur une plateforme d'entraînement linguistique. La case autorisant l'usage de ses enregistrements vocaux pour entraîner des modèles est pré-cochée, page 34 des conditions. Deux ans plus tard, une voix reconnaissable comme la sienne apparaît dans une bibliothèque de voix synthétiques vendue à des annonceurs. Elle vous écrit.",
+   fact:"Le droit européen exige un consentement libre, spécifique, éclairé et univoque, et une case pré-cochée ne remplit aucune de ces conditions. Le consentement est donc juridiquement nul. Reste le problème pratique : le modèle est entraîné, la voix en est indissociable, et aucune procédure connue ne permet de retirer une voix d'un modèle déjà publié.",
+   q:"Le consentement est nul et le dommage est irréversible. Votre loi fait quoi de cette combinaison ?"},
+
   {n:"L'EMPLOYÉE QUI A PARLÉ",
-   sit:"Une employée a découvert que son entreprise violait votre loi. Elle l'a dit à la presse. L'entreprise engage une procédure de licenciement.",
-   q:"Sans elle, personne n'aurait rien su. Que vaut-elle dans votre dispositif, et qui paie son avocat ?"}
+   sit:"Une analyste découvre que le modèle de scoring de sa banque refuse plus souvent les crédits aux habitants de deux communes bruxelloises, à situation financière identique. Elle alerte en interne. Rien ne bouge pendant sept mois. Elle transmet le dossier à un journaliste. La banque engage un licenciement pour violation du secret professionnel.",
+   fact:"Sans elle, personne n'aurait rien su : c'est la règle générale des discriminations algorithmiques, qui ne sont presque jamais détectées de l'extérieur. La directive européenne sur les lanceurs d'alerte prévoit une protection, à condition d'avoir suivi un canal interne d'abord — ce qu'elle a fait — mais la protection se plaide devant un tribunal du travail, après le licenciement, et à ses frais.",
+   q:"Votre dispositif tient entièrement sur des gens comme elle. Que leur garantissez-vous, et qui paie leur avocat ?"}
+  ];
+
+  /* Trois verdicts possibles, parce que « couverte » et « applicable »
+     sont deux choses différentes — et c'est souvent là que ça se joue. */
+  var VERDICTS = [
+   {k:"ok",t:"COUVERTE ET APPLICABLE",d:"Notre texte règle le cas et quelqu'un peut agir.",g:{s:5},
+    punch:"VOTRE LOI TIENT SUR CE CAS.",
+    why:"SOCIETY monte : une règle qui couvre un cas qu'elle n'avait pas anticipé, et qui désigne quelqu'un capable d'agir, est une bonne règle. Vérifiez seulement une chose avant de passer : ce quelqu'un existe-t-il vraiment, avec un budget et un mandat ?"},
+   {k:"weak",t:"COUVERTE MAIS INAPPLICABLE",d:"Le texte a raison, personne ne peut l'exécuter.",g:{s:-2,p:2},
+    punch:"AVOIR RAISON SANS POUVOIR AGIR.",
+    why:"SOCIETY baisse légèrement, parce qu'une protection annoncée et jamais exécutée est pire qu'une absence de règle : elle rassure ceux qu'elle devrait protéger. PROGRESS monte de 2, parce qu'identifier ce décalage est exactement le travail que la plupart des législateurs ne font pas avant le vote."},
+   {k:"hole",t:"TROU DANS LA LOI",d:"Notre texte ne dit rien de ce cas.",g:{s:-3,p:2},
+    punch:"TROU DANS LA LOI.",
+    why:"SOCIETY baisse parce que la loi ne protège personne ici. PROGRESS monte de 2 parce que l'avoir vu maintenant vaut infiniment mieux que de l'avoir voté sans le voir : chercher les cas que son propre texte ne couvre pas est le seul exercice qui améliore une régulation."}
   ];
 
   /* ======================================================
@@ -859,10 +1086,13 @@
 
   /* ---------- ROUND 3 : OÙ EST LA LIGNE ---------- */
   {t:"title",k:"ROUND 3 / 4",h:"OÙ EST LA LIGNE ?",
-   txt:"Quatre échelles. Chacune part de quelque chose que tout le monde fait, et monte marche par marche jusqu'à quelque chose que personne ne défendrait. La classe tranche à chaque marche : OK, PAS OK, ça dépend.",
-   src:"Il n'y a pas de bonne réponse aux marches. Il y a une ligne, et elle doit pouvoir se dire à voix haute."},
+   txt:"Quatre échelles. Chacune part de quelque chose que tout le monde fait et monte jusqu'à quelque chose que personne ne défendrait. Monter l'échelle est facile. Ce qui suit ne l'est pas : il faudra dire pourquoi ça bascule à cet endroit précis, et comment on l'empêche.",
+   src:"Deux écrans par échelle. Le second met en échec le critère que la classe vient de choisir. Comptez dix minutes par échelle : deux suffisent pour une heure."},
 
-  {t:"chain",n:0},{t:"chain",n:1},{t:"chain",n:2},{t:"chain",n:3},
+  {t:"chain",n:0},{t:"basc",n:0},{t:"prev",n:0},
+  {t:"chain",n:1},{t:"basc",n:1},{t:"prev",n:1},
+  {t:"chain",n:2},{t:"basc",n:2},{t:"prev",n:2},
+  {t:"chain",n:3},{t:"basc",n:3},{t:"prev",n:3},
 
   /* ---------- ROUND 4 : THE CLASS AI ACT ---------- */
   {t:"title",k:"ROUND 4 / 4",h:"THE CLASS AI ACT",
@@ -890,7 +1120,7 @@
      ÉTAT
      ====================================================== */
 
-  var st={i:0,g:{p:60,e:60,s:60},log:[],laws:["","",""],done:{},flags:{},draw:null,sv:{},chain:{},nteam:6};
+  var st={i:0,g:{p:60,e:60,s:60},log:[],laws:["","",""],done:{},flags:{},draw:null,sv:{},chain:{},basc:{},nteam:6};
   var $s=document.getElementById("stage"),$gz=document.getElementById("gz"),
       $pos=document.getElementById("pos"),$pv=document.getElementById("prev"),
       $nx=document.getElementById("next"),$rs=document.getElementById("rst"),
@@ -967,7 +1197,7 @@
      ====================================================== */
 
   function e(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-  var KEY=["A","B","C"];
+  var KEY=["A","B","C","D"];
   var R={};
 
   R.boot=function(){
@@ -1002,12 +1232,12 @@
 
   /* Révélation progressive : la phrase choc et les points d'abord.
      Le reste s'affiche seulement quand l'enseignant clique. */
-  function revBlock(punch,txt,src,d,why,q){
+  function revBlock(punch,txt,src,d,why,q,factLabel){
     var b="",x="";
     b+='<button class="disc" data-act="disc" data-t="why">POURQUOI CES POINTS ?</button>';
     x+='<div class="dbox" data-box="why" hidden><p class="why">'+e(why)+"</p></div>";
     if(txt){
-      b+='<button class="disc" data-act="disc" data-t="fact">LE FAIT</button>';
+      b+='<button class="disc" data-act="disc" data-t="fact">'+e(factLabel||"LE FAIT")+"</button>";
       x+='<div class="dbox" data-box="fact" hidden><p class="txt">'+e(txt)+"</p>"+
          (src?'<p class="src">'+e(src)+"</p>":"")+"</div>";
     }
@@ -1200,25 +1430,57 @@
     return "aucune ligne posée";
   }
 
+  /* ---------- ROUND 3 : la bascule ---------- */
+  function transition(v){
+    if(!v.length)return "ÉCHELLE NON TERMINÉE — REVENEZ À L'ÉCRAN PRÉCÉDENT";
+    for(var i=0;i<v.length;i++)if(v[i]==="no")
+      return i===0?"PAS OK DÈS LA PREMIÈRE MARCHE":"BASCULE ENTRE LA MARCHE 0"+i+" ET LA MARCHE 0"+(i+1);
+    for(var j=0;j<v.length;j++)if(v[j]==="dep")
+      return "AUCUNE MARCHE JUGÉE PAS OK — HÉSITATION À LA MARCHE 0"+(j+1);
+    return "LES SIX MARCHES VALIDÉES — PERSONNE NE DÉFEND LA DERNIÈRE, REPRENEZ";
+  }
+  function bstate(id){st.basc[id]=st.basc[id]||{};return st.basc[id];}
+
+  R.basc=function(s){
+    var c=CHAINS[s.n],B=BASC[c.id],b=bstate(c.id);
+    var head='<div class="kick">&gt; ROUND 3 · ÉCHELLE 0'+(s.n+1)+' · <b>POURQUOI ICI ?</b></div>'+
+      '<p class="choice">&gt; '+e(transition(st.chain[c.id]||[]))+"</p>";
+    if(b.c==null)
+      return head+'<p class="sit">'+e(c.q)+"</p>"+
+        '<div class="vote">'+opts(B.crit,null,"bcrit")+"</div>";
+    var cr=B.crit[b.c];
+    return head+'<p class="sit sm">'+e(c.q)+"</p>"+
+      '<p class="choice">&gt; CRITÈRE RETENU : '+e(cr.t)+"</p>"+
+      revBlock(cr.punch,cr.txt,"",cr.g,cr.why,cr.q,"LA MISE EN ÉCHEC")
+        .replace('<div class="rev">','<div class="rev" style="border-top:none;padding-top:0;margin-top:0">');
+  };
+
+  R.prev=function(s){
+    var c=CHAINS[s.n],B=BASC[c.id],b=bstate(c.id);
+    var head='<div class="kick">&gt; ROUND 3 · ÉCHELLE 0'+(s.n+1)+' · <b>COMMENT L\'EMPÊCHER ?</b></div>'+
+      (b.c!=null?'<p class="choice">&gt; VOTRE CRITÈRE : '+e(B.crit[b.c].t)+"</p>":"");
+    if(b.p==null)
+      return head+'<p class="sit">Quel mécanisme empêche réellement la dernière marche ? Un seul.</p>'+
+        '<div class="vote">'+opts(B.prev,null,"bprev")+"</div>";
+    var pr=B.prev[b.p];
+    return head+'<p class="choice">&gt; MÉCANISME CHOISI : '+e(pr.t)+"</p>"+
+      revBlock(pr.punch,pr.txt,"",pr.g,pr.why,pr.q,"LA LIMITE")
+        .replace('<div class="rev">','<div class="rev" style="border-top:none;padding-top:0;margin-top:0">');
+  };
+
   /* ---------- ROUND 4 : épreuves ---------- */
   R.ep=function(s){
     var ep=EPREUVES[s.n],v=st.sv[s.n];
-    var rev="";
-    if(v){
-      var d=v==="ok"?{s:4}:{s:-3,p:2};
-      rev=revBlock(v==="ok"?"VOTRE LOI TIENT SUR CE CAS.":"TROU DANS LA LOI.","","",d,
-        v==="ok"
-          ?"SOCIETY monte : une règle qui couvre un cas qu'elle n'avait pas anticipé est une bonne règle. Vérifiez quand même qui l'applique, parce qu'une loi qui couvre tout sans contrôleur ne couvre rien."
-          :"SOCIETY baisse parce que la loi ne protège personne ici, et PROGRESS monte de 2 parce que l'avoir vu maintenant vaut infiniment mieux que de l'avoir voté sans le voir. C'est le travail réel du législateur : chercher les cas que son texte ne couvre pas.",
-        ep.q);
-    }
-    return '<div class="kick">&gt; ROUND 4 · ÉPREUVE 0'+(s.n+1)+' / 08 — <b>'+e(ep.n)+"</b></div>"+
-      '<p class="sit">'+e(ep.sit)+"</p>"+
-      '<ul class="mini">'+lawMini()+"</ul>"+
-      '<div class="vb'+(v?" set":"")+'">'+
-        '<button class="sbtn'+(v==="ok"?" on":"")+'" data-act="sv" data-i="'+s.n+'" data-v="ok">COUVERTE PAR NOS LOIS</button>'+
-        '<button class="sbtn'+(v==="hole"?" on":"")+'" data-act="sv" data-i="'+s.n+'" data-v="hole">TROU DANS LA LOI</button>'+
-      "</div>"+rev;
+    var head='<div class="kick">&gt; ROUND 4 · ÉPREUVE 0'+(s.n+1)+' / 08 — <b>'+e(ep.n)+"</b></div>";
+    if(!v)
+      return head+'<p class="sit">'+e(ep.sit)+"</p>"+
+        '<ul class="mini">'+lawMini()+"</ul>"+
+        '<div class="vote">'+opts(VERDICTS,null,"epv")+"</div>";
+    var V=VERDICTS.filter(function(x){return x.k===v;})[0]||VERDICTS[2];
+    return head+'<p class="sit sm">'+e(ep.sit)+"</p>"+
+      '<p class="choice">&gt; VERDICT : '+e(V.t)+"</p>"+
+      revBlock(V.punch,ep.fact,"",V.g,V.why,ep.q,"CE QUE DIT LA LOI RÉELLE")
+        .replace('<div class="rev">','<div class="rev" style="border-top:none;padding-top:0;margin-top:0">');
   };
   function lawMini(){
     var h="";
@@ -1270,6 +1532,20 @@
     var o=[];["p","e","s"].forEach(function(k){var v=(d||{})[k]||0;
       if(v)o.push(NM[k]+" "+(v>0?"+":"−")+Math.abs(v));});
     return o.length?o.join(" · "):"aucun impact";
+  }
+  function bascPrint(c){
+    var B=BASC[c.id],b=st.basc[c.id]||{},h="";
+    if(b.c!=null){var cr=B.crit[b.c];
+      h+="<h3>Critère retenu : "+e(cr.t)+" ("+pDeltas(cr.g)+")</h3>"+
+         "<p><b>"+e(cr.punch)+"</b></p><p>"+e(cr.txt)+"</p>"+
+         "<p><i>Pourquoi ces points :</i> "+e(cr.why)+"</p>"+
+         "<p><i>Relance :</i> "+e(cr.q)+"</p>";}
+    if(b.p!=null){var pr=B.prev[b.p];
+      h+="<h3>Mécanisme choisi : "+e(pr.t)+" ("+pDeltas(pr.g)+")</h3>"+
+         "<p><b>"+e(pr.punch)+"</b></p><p>"+e(pr.txt)+"</p>"+
+         "<p><i>Pourquoi ces points :</i> "+e(pr.why)+"</p>"+
+         "<p><i>Relance :</i> "+e(pr.q)+"</p>";}
+    return h;
   }
   function fiche(c,i){
     return '<div class="fiche"><p class="sm">AI LAB 2035 — ROUND 2 — DOSSIER '+(i+1)+" / "+e(c.tag)+"</p>"+
@@ -1341,14 +1617,16 @@
           return "<li>"+e(r)+(v[i]?" <b>["+VL[v[i]]+"]</b>":"")+"</li>";}).join("")+"</ol>"+
         "<p><b>"+e(c.punch)+"</b></p><p>"+e(c.txt)+"</p>"+
         (c.src?'<p class="sm">'+e(c.src)+"</p>":"")+
-        "<p><i>Question ouverte :</i> "+e(c.q)+"</p></div>";
+        "<p><i>Pourquoi ici :</i> "+e(c.q)+"</p>"+bascPrint(c)+"</div>";
     });
 
     h+="<h2>Round 4 — les huit épreuves</h2>";
     EPREUVES.forEach(function(ep,i){
-      var v=st.sv[i];
-      h+='<div class="box"><h3>'+e(ep.n)+"</h3><p>"+e(ep.sit)+"</p>"+
-        '<p class="pick">Verdict : '+(v?(v==="ok"?"couverte par nos lois":"trou dans la loi"):"non jouée")+"</p>"+
+      var v=st.sv[i],V=VERDICTS.filter(function(x){return x.k===v;})[0];
+      h+='<div class="box"><h3>'+e(ep.n)+"</h3><p><b>"+e(ep.sit)+"</b></p>"+
+        '<p class="pick">Verdict de la classe : '+(V?e(V.t)+" — "+pDeltas(V.g):"non jouée")+"</p>"+
+        (V?"<p><i>Pourquoi ces points :</i> "+e(V.why)+"</p>":"")+
+        "<p><i>Ce que dit la loi réelle :</i> "+e(ep.fact)+"</p>"+
         "<p><i>Relance :</i> "+e(ep.q)+"</p></div>";
     });
 
@@ -1381,13 +1659,23 @@
       '<p class="src" style="margin-top:40px">&gt; FIN DE SESSION<span class="cur">_</span></p></div>';
   };
 
-  var TIMERS={dec:60,quiz:60,slot:150,draw:600,chain:240,laws:300,ep:120};
+  /* Taille du texte : réglable en salle, parce qu'aucun projecteur ne ressemble au suivant. */
+  var Z=1,$main=document.querySelector("main");
+  function zoom(v){
+    Z=Math.max(.8,Math.min(2.2,Math.round(v*100)/100));
+    $main.style.zoom=Z;
+    try{localStorage.setItem("ailab_z",String(Z));}catch(err){}
+    $pos.textContent="> ÉTAPE "+(st.i+1)+" / "+STEPS.length+"   TEXTE "+Math.round(Z*100)+"%";
+  }
+  try{var z0=parseFloat(localStorage.getItem("ailab_z"));if(z0>=.8&&z0<=2.2)Z=z0;}catch(err){}
+
+  var TIMERS={dec:60,quiz:60,slot:150,draw:600,chain:180,basc:180,prev:180,laws:300,ep:150};
   function render(){
     var s=STEPS[st.i];
     setT(TIMERS[s.t]||0);
     $pv.disabled=st.i===0;
     $nx.textContent=st.i===STEPS.length-1?"FIN":"SUIVANT >>";
-    $pos.textContent="> ÉTAPE "+(st.i+1)+" / "+STEPS.length;
+    $pos.textContent="> ÉTAPE "+(st.i+1)+" / "+STEPS.length+"   TEXTE "+Math.round(Z*100)+"%";
     $s.innerHTML=R[s.t](s);
     window.scrollTo(0,0);
   }
@@ -1429,18 +1717,32 @@
       st.chain[ch.id].push(vv);render();
     }
     else if(s.t==="ep"){
-      if(k>1||st.sv[s.n])return;
-      var vd=k===0?"ok":"hole",dd=k===0?{s:4}:{s:-3,p:2};
-      st.sv[s.n]=vd;
-      st.log.push({ph:"R4",nm:"Épreuve — "+EPREUVES[s.n].n,ch:k===0?"couverte":"trou",g:dd});
-      render();delta(dd);
+      if(st.sv[s.n]||!VERDICTS[k])return;
+      var V=VERDICTS[k];
+      st.sv[s.n]=V.k;
+      st.log.push({ph:"R4",nm:"Épreuve — "+EPREUVES[s.n].n,ch:V.t,g:V.g});
+      render();delta(V.g);
+    }
+    else if(s.t==="basc"){
+      var cc=CHAINS[s.n],bb=bstate(cc.id),cr=BASC[cc.id].crit[k];
+      if(bb.c!=null||!cr)return;
+      bb.c=k;
+      st.log.push({ph:"R3",nm:"Critère — "+cc.name,ch:cr.t,g:cr.g});
+      render();delta(cr.g);
+    }
+    else if(s.t==="prev"){
+      var c2=CHAINS[s.n],b2=bstate(c2.id),pr=BASC[c2.id].prev[k];
+      if(b2.p!=null||!pr)return;
+      b2.p=k;
+      st.log.push({ph:"R3",nm:"Mécanisme — "+c2.name,ch:pr.t,g:pr.g});
+      render();delta(pr.g);
     }
   }
 
   $s.addEventListener("click",function(ev){
     var b=ev.target.closest("[data-act]");if(!b)return;
     var a=b.getAttribute("data-act");
-    if(a==="dec"||a==="quiz"||a==="pool"){vote(+b.getAttribute("data-k"));return;}
+    if(a==="dec"||a==="quiz"||a==="pool"||a==="epv"||a==="bcrit"||a==="bprev"){vote(+b.getAttribute("data-k"));return;}
     if(a==="draw"){st.nteam=+b.getAttribute("data-n");drawPool(st.nteam);render();return;}
     if(a==="print"){buildPrint(b.getAttribute("data-m"));setTimeout(function(){try{window.print();}catch(err){}},80);return;}
 
@@ -1458,14 +1760,6 @@
       render();return;
     }
 
-    if(a==="sv"){
-      var i=+b.getAttribute("data-i"),v=b.getAttribute("data-v");
-      if(st.sv[i])return;
-      st.sv[i]=v;
-      var d=v==="ok"?{s:4}:{s:-3,p:2};
-      st.log.push({ph:"R4",nm:"Épreuve — "+EPREUVES[i].n,ch:v==="ok"?"couverte":"trou",g:d});
-      render();delta(d);
-    }
   });
 
   $s.addEventListener("input",function(ev){
@@ -1474,11 +1768,21 @@
 
   $nx.addEventListener("click",function(){if(st.i<STEPS.length-1){st.i++;render();}});
   $pv.addEventListener("click",function(){if(st.i>0){st.i--;render();}});
+  document.getElementById("zp").addEventListener("click",function(){zoom(Z+.1);});
+  document.getElementById("zm").addEventListener("click",function(){zoom(Z-.1);});
+  document.getElementById("crt").addEventListener("click",function(){
+    var on=document.body.classList.toggle("crt");
+    this.style.borderColor=on?"var(--amb)":"var(--grn3)";
+    this.style.color=on?"var(--amb)":"var(--wht)";
+    try{localStorage.setItem("ailab_crt",on?"1":"0");}catch(err){}
+  });
+  try{if(localStorage.getItem("ailab_crt")==="1")document.getElementById("crt").click();}catch(err){}
+
   $tm.addEventListener("click",togT);
   $tm.addEventListener("keydown",function(ev){if(ev.key==="Enter")togT();});
   $rs.addEventListener("click",function(){
     if(!confirm("Nouvelle partie ? Décisions, lois et tirage seront effacés."))return;
-    st={i:0,g:{p:60,e:60,s:60},log:[],laws:["","",""],done:{},flags:{},draw:null,sv:{},chain:{},nteam:st.nteam};
+    st={i:0,g:{p:60,e:60,s:60},log:[],laws:["","",""],done:{},flags:{},draw:null,sv:{},chain:{},basc:{},nteam:st.nteam};
     document.getElementById("sess").textContent="02";
     paintG();render();
   });
@@ -1492,10 +1796,13 @@
     if(k==="a"){vote(0);return;}
     if(k==="b"){vote(1);return;}
     if(k==="c"){vote(2);return;}
+    if(k==="d"){vote(3);return;}
+    if(ev.key==="+"||ev.key==="="){ev.preventDefault();zoom(Z+.1);return;}
+    if(ev.key==="-"||ev.key==="_"){ev.preventDefault();zoom(Z-.1);return;}
     if(k==="p"){buildPrint("all");setTimeout(function(){try{window.print();}catch(err){}},80);return;}
     if(k==="f"){buildPrint("fiches");setTimeout(function(){try{window.print();}catch(err){}},80);return;}
   });
 
-  buildG();paintG();render();
+  buildG();paintG();render();zoom(Z);
 })();
 </script>
