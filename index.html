@@ -1863,7 +1863,7 @@
     }
   }
 
-  $s.addEventListener("click",function(ev){
+  document.addEventListener("click",function(ev){
     var b=ev.target.closest("[data-act]");if(!b)return;
     var a=b.getAttribute("data-act");
     if(a==="dec"||a==="quiz"||a==="pool"||a==="epv"||a==="bcrit"||a==="bprev"){vote(+b.getAttribute("data-k"));return;}
@@ -1873,9 +1873,10 @@
     if(a==="opendlg"){delete st.closed[st.i];render();return;}
 
     if(a==="disc"){
-      var t=b.getAttribute("data-t"),box=$s.querySelector('[data-box="'+t+'"]'),open=box&&box.hidden;
-      Array.prototype.forEach.call($s.querySelectorAll(".dbox"),function(x){x.hidden=true;});
-      Array.prototype.forEach.call($s.querySelectorAll(".disc"),function(x){x.classList.remove("on");});
+      var root=b.closest(".rev")||$s;
+      var t=b.getAttribute("data-t"),box=root.querySelector('[data-box="'+t+'"]'),open=box&&box.hidden;
+      Array.prototype.forEach.call(root.querySelectorAll(".dbox"),function(x){x.hidden=true;});
+      Array.prototype.forEach.call(root.querySelectorAll(".disc"),function(x){x.classList.remove("on");});
       if(box&&open){box.hidden=false;b.classList.add("on");}
       return;
     }
